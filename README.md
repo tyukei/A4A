@@ -23,6 +23,10 @@ cp agent_4_agent/.env.example agent_4_agent/.env
 
 .envファイルにGEMINI_API_KEYを設定してください
 
+GEMINI_API_KEYは、以下から取得できます。
+
+https://aistudio.google.com/api-keys
+
 ## 実行手順
 以下ターミナルより実行します。
 ```bash
