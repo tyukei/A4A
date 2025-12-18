@@ -66,28 +66,34 @@ jobs:
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           echo "LAST_TAG=$LAST_TAG"
 
+          # 1. PRの一覧を取得
           if [ -n "$LAST_TAG" ]; then
-            CONTENT_LIST=$(gh pr list --state merged --base main --limit 50 --json title \
-              --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
+            PRS=$(gh pr list --state merged --base main --limit 50 --json title --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
           else
-            CONTENT_LIST=$(gh pr list --state merged --limit 20 --json title \
-              --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
+            PRS=$(gh pr list --state merged --limit 20 --json title --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
           fi
 
-          if [ -z "${CONTENT_LIST// }" ]; then
-            echo "No PRs found. Falling back to commit messages."
-            if [ -n "$LAST_TAG" ]; then
-              CONTENT_LIST=$(git log "${LAST_TAG}..HEAD" --oneline --no-merges | head -n 50)
-            else
-              CONTENT_LIST=$(git log --oneline --no-merges | head -n 20)
-            fi
+          # 2. コミットログを取得（マージコミット以外）
+          if [ -n "$LAST_TAG" ]; then
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --oneline --no-merges | head -n 50)
+          else
+            COMMITS=$(git log --oneline --no-merges | head -n 20)
           fi
+
+          # 3. 両方を結合して提供
+          CONTENT_LIST=$(cat <<EOF
+          ### Merged Pull Requests:
+          $PRS
+
+          ### Commit Messages:
+          $COMMITS
+          EOF
+          )
 
           if [ -z "${CONTENT_LIST// }" ]; then
             SUMMARY="- 内部改善（詳細なし）"
           else
             export CONTENT_LIST
-
             SUMMARY="$(python3 .github/scripts/generate_release_summary.py)"
           fi
 
