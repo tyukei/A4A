@@ -76,53 +76,55 @@ jobs:
             SUMMARY="- 内部改善（詳細なし）"
           else
             export CONTENT_LIST
-            SUMMARY=$(python3 - <<'PY'
-            import os, json, http.client
 
-            api_key = os.getenv("GEMINI_API_KEY")
-            content = os.getenv("CONTENT_LIST", "").strip()
+            # ---- write python script (heredoc end marker MUST be at column 0) ----
+            cat > /tmp/gen_summary.py <<'PY'
+import os, json, http.client
 
-            prompt = f"""
-            あなたはリリースノート編集者です。以下の変更一覧（Pull Request / Commit）から、日本語で「What's New」を作成してください。
+api_key = os.getenv("GEMINI_API_KEY")
+content = os.getenv("CONTENT_LIST", "").strip()
 
-            出力ルール（厳守）:
-            - 出力は箇条書きのみ（- で始まる行）。見出し/前置き/理由/注釈は禁止。
-            - 最大5項目。各項目は1文で簡潔に。
-            - 根拠のない推測は禁止（例: 「安定性向上」「パフォーマンス改善」など確実に言えないことは書かない）。
-            - 変更内容が不明瞭な場合は「内部改善（詳細なし）」と正直に書く。
-            - 「承知しました」などの前置きは不要。
+prompt = f"""
+あなたはリリースノート編集者です。以下の変更一覧（Pull Request / Commit）から、日本語で「What's New」を作成してください。
 
-            変更一覧:
-            {content}
-            """.strip()
+出力ルール（厳守）:
+- 出力は箇条書きのみ（- で始まる行）。見出し/前置き/理由/注釈は禁止。
+- 最大5項目。各項目は1文で簡潔に。
+- 根拠のない推測は禁止（例: 「安定性向上」「パフォーマンス改善」など確実に言えないことは書かない）。
+- 変更内容が不明瞭な場合は「内部改善（詳細なし）」と正直に書く。
+- 「承知しました」などの前置きは不要。
 
-            def call(prompt: str) -> str:
-                conn = http.client.HTTPSConnection("generativelanguage.googleapis.com")
-                payload = {"contents": [{"parts": [{"text": prompt}]}]}
-                conn.request(
-                    "POST",
-                    f"/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}",
-                    json.dumps(payload),
-                    {"Content-Type": "application/json"},
-                )
-                res = conn.getresponse()
-                body = res.read().decode("utf-8")
-                if res.status != 200:
-                    return "- 内部改善（詳細なし）"
-                data = json.loads(body)
-                text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                if not text:
-                    return "- 内部改善（詳細なし）"
-                if not text.lstrip().startswith("-"):
-                    text = "- " + text.replace("\n", " ").strip()
-                return text
+変更一覧:
+{content}
+""".strip()
 
-            try:
-                print(call(prompt))
-            except Exception:
-                print("- 内部改善（詳細なし）")
-            PY
-            )
+def call(prompt: str) -> str:
+    conn = http.client.HTTPSConnection("generativelanguage.googleapis.com")
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    conn.request(
+        "POST",
+        f"/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}",
+        json.dumps(payload),
+        {"Content-Type": "application/json"},
+    )
+    res = conn.getresponse()
+    body = res.read().decode("utf-8")
+    if res.status != 200:
+        return "- 内部改善（詳細なし）"
+    data = json.loads(body)
+    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    if not text:
+        return "- 内部改善（詳細なし）"
+    if not text.lstrip().startswith("-"):
+        text = "- " + text.replace("\n", " ").strip()
+    return text
+
+try:
+    print(call(prompt))
+except Exception:
+    print("- 内部改善（詳細なし）")
+PY
+            SUMMARY="$(python3 /tmp/gen_summary.py)"
           fi
 
           # ✅ multiline output (NO %0A)
