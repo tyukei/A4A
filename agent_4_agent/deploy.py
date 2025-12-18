@@ -41,7 +41,6 @@ def deploy():
     
     # カレントディレクトリを一時的にルートに変更して、相対パスでパッケージを指定する
     # 理由: vertexai.agent_engines.create は指定したパスの名前をそのままパッケージ名として扱うため、
-    #      ルートから "agent_4_agent" を指定するのが最も確実です。
     cwd = os.getcwd()
     os.chdir(base_dir)
     try:
