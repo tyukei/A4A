@@ -50,27 +50,38 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get PRs merged since last tag
+          # Get PRs or Commits
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LAST_TAG" ]; then
-            PR_LIST=$(gh pr list --state merged --limit 10 --json title,body --template '{{range .}}- {{.title}}\n{{end}}')
+          
+          # Try getting PRs
+          if [ -n "$LAST_TAG" ]; then
+            CONTENT_LIST=$(gh pr list --state merged --base main --limit 20 --json title --template '{{range .}}- {{.title}}\n{{end}}')
           else
-            PR_LIST=$(gh pr list --state merged --base main --limit 20 --json title,body --template '{{range .}}- {{.title}}\n{{end}}')
+            CONTENT_LIST=$(gh pr list --state merged --limit 10 --json title --template '{{range .}}- {{.title}}\n{{end}}')
+          fi
+
+          # Fallback to commits if no PRs found
+          if [ -z "$CONTENT_LIST" ]; then
+            echo "No PRs found. Falling back to commit messages."
+            if [ -n "$LAST_TAG" ]; then
+              CONTENT_LIST=$(git log ${LAST_TAG}..HEAD --oneline --no-merges | head -n 20)
+            else
+              CONTENT_LIST=$(git log --oneline --no-merges | head -n 10)
+            fi
           fi
           
-          if [ -z "$PR_LIST" ]; then
-            echo "SUMMARY=No recent PRs found." >> $GITHUB_OUTPUT
+          if [ -z "$CONTENT_LIST" ]; then
+            echo "SUMMARY=No significant changes found." >> $GITHUB_OUTPUT
             exit 0
           fi
 
           # Call Gemini API
-          # Pass PR_LIST as an environment variable to the python script
-          export PR_LIST="$PR_LIST"
+          export CONTENT_LIST="$CONTENT_LIST"
           SUMMARY=$(python3 -c "
           import os, json, http.client
           api_key = os.getenv('GEMINI_API_KEY')
-          pr_list = os.getenv('PR_LIST')
-          prompt = f'Following is a list of merged pull requests. Please write a concise, friendly, and professional \"What\'s New\" summary for release notes in Japanese. Focus on the value to the user. Keep it under 5 bullet points.\n\n{pr_list}'
+          content = os.getenv('CONTENT_LIST')
+          prompt = f'Following is a list of changes (Pull Requests or Commits). Please write a concise, friendly, and professional \"What\'s New\" summary for release notes in Japanese. Focus on the value to the user. Keep it under 5 bullet points.\n\n{content}'
           
           conn = http.client.HTTPSConnection('generativelanguage.googleapis.com')
           headers = {'Content-Type': 'application/json'}
