@@ -26,8 +26,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           CURRENT_VERSION=$(grep '^version = ' pyproject.toml | cut -d '"' -f 2)
+          echo "Current version: $CURRENT_VERSION"
+
           NEW_VERSION=$(python3 -c "v='$CURRENT_VERSION'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
+          echo "New version: $NEW_VERSION"
+
           sed -i 's/^version = "'$CURRENT_VERSION'"/version = "'$NEW_VERSION'"/' pyproject.toml
           echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
@@ -35,13 +40,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+
           git add pyproject.toml
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
+
           git commit -m "chore: bump version to ${{ steps.bump_version.outputs.VERSION }} [skip ci]"
           git push
 
@@ -56,6 +64,8 @@ jobs:
           set -euo pipefail
 
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "LAST_TAG=$LAST_TAG"
+
           if [ -n "$LAST_TAG" ]; then
             CONTENT_LIST=$(gh pr list --state merged --base main --limit 50 --json title \
               --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
@@ -65,6 +75,7 @@ jobs:
           fi
 
           if [ -z "${CONTENT_LIST// }" ]; then
+            echo "No PRs found. Falling back to commit messages."
             if [ -n "$LAST_TAG" ]; then
               CONTENT_LIST=$(git log "${LAST_TAG}..HEAD" --oneline --no-merges | head -n 50)
             else
@@ -76,7 +87,9 @@ jobs:
             SUMMARY="- 内部改善（詳細なし）"
           else
             export CONTENT_LIST
-            SUMMARY="$(python3 - <<'PY'
+
+            # Python scriptを書き出して実行（YAML/シェルのhere-doc事故を避ける）
+            cat > /tmp/gen_summary.py <<'PY'
 import os, json, http.client
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -107,10 +120,13 @@ def call(prompt: str) -> str:
     )
     res = conn.getresponse()
     body = res.read().decode("utf-8")
+
     if res.status != 200:
         return "- 内部改善（詳細なし）"
+
     data = json.loads(body)
     text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
     if not text:
         return "- 内部改善（詳細なし）"
     if not text.lstrip().startswith("-"):
@@ -122,10 +138,11 @@ try:
 except Exception:
     print("- 内部改善（詳細なし）")
 PY
-)"
+
+            SUMMARY="$(python3 /tmp/gen_summary.py)"
           fi
 
-          # ✅ multiline output (NO %0A)
+          # ✅ 改行を潰さずに steps output として渡す（%0Aは使わない）
           {
             echo "SUMMARY<<EOF"
             echo "$SUMMARY"
