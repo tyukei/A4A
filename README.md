@@ -6,6 +6,7 @@
 
 ## コントリビュータの募集
 自分のオリジナルのエージェントを作ってぜひ、PR作成して、共有してください。
+詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご確認ください。
 
 1. GitHubでこのリポジトリをFork
 2. Forkしたリポジトリをclone
