@@ -97,10 +97,16 @@ jobs:
             SUMMARY="$(python3 .github/scripts/generate_release_summary.py)"
           fi
 
-          # ✅ 改行を潰さずに steps output として渡す（%0Aは使わない）
+          # ✅ 改行を潰さずに steps output として渡す
           {
             echo "SUMMARY<<EOF"
             echo "$SUMMARY"
+            echo "EOF"
+            echo "PRS<<EOF"
+            echo "$PRS"
+            echo "EOF"
+            echo "COMMITS<<EOF"
+            echo "$COMMITS"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -111,6 +117,14 @@ jobs:
           body: |
             ## ✨ What's New
             ${{ steps.ai_summary.outputs.SUMMARY || '- 内部改善（詳細なし）' }}
+
+            ---
+            ### 🛠 Details
+            #### Merged Pull Requests
+            ${{ steps.ai_summary.outputs.PRS || '- No merged PRs' }}
+
+            #### Commits
+            ${{ steps.ai_summary.outputs.COMMITS || '- No direct commits' }}
           generate_release_notes: false
           draft: false
           prerelease: false
