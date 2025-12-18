@@ -181,3 +181,127 @@ adkの場合、UIはadk webコマンドで起動します。
 ```bash
 adk web
 ```
+
+
+## agent engineへのディプロイ
+
+例えば、　ADKで作ったエージェントを起動するためには、
+通常まずソースコードをクローンして、環境構築して、ターミナルで実行する必要があります。
+
+しかし、一度ディプロイすれば、エンドポイントを叩くだけで起動できるようになります。
+
+つまり、外部のアプリケーションから簡単にエージェントとやり取りすることができます。
+
+現在、ADKのディプロイ方法として以下３つの方法があります。
+
+![alt text](assets/image-deploy.png)
+
+- Vertex AI Agent Engine: エージェントのディプロイ、管理、スケールに特化したサービス
+- Cloud Run: Google Cloudで一般的に使われているコンテナ型のサービス
+- Custom Infrastructure: 自分で構築したコンテナ型のサービス
+
+https://google.github.io/adk-docs/deploy/
+
+### agent engineとは
+Vertex AI Platform の一部であるVertex AI Agent Engine は、開発者が本番環境で AI エージェントをデプロイ、管理、スケーリングできるようにする一連のサービスです。
+
+イメージとして、まずエージェントをADKなどで作成し、それをVertex AI Agent Engineにディプロイし、その後クライアントからリクエストを送ることで、エージェントを起動するという流れになります。
+
+![alt text](assets/image-agent-engine-1.png)
+
+開発、ディプロイ、リクエスト、管理までがパッケージ化されているので、
+pythonで簡単に一連のプロセスを手軽に行えるようになります。
+
+![alt text](assets/image-agent-engine-2.png)
+
+
+https://docs.cloud.google.com/agent-builder/agent-engine/overview
+
+
+### agent engineでのディプロイ手順
+
+.envに以下を追加します
+```
+PROJECT_ID = your_project_id
+LOCATION = your_location
+STAGING_BUCKET = gs://your_staging_bucket
+```
+
+ターミナルで以下実行します
+```bash
+gcloud auth application-default login
+```
+
+その後、以下を実行します
+```bash
+uv run python -m agent_4_agent.deploy
+```
+
+10分ほど待つと、以下のメッセージが出てくると、成功です
+```bash
+Deployment finished successfully!
+Resource Name: projects/xxxx/locations/region/reasoningEngines/xxxxxxxxx
+```
+
+
+
+#### ハマった点
+
+今回サブエージェントや、toolを別フォルダに分けて作成しましたが、ディプロイするとき、ハマってしましました。
+
+その時のハマった点を備忘録として残しておきます。
+
+ただ、極端に大きいエージェントや個人で開発する分には、すべてagent.pyに書いてしまうのが良いと思います。
+
+- -m オプションを付けないと パッケージ（モジュール）として認識されず、相対 import やパッケージ内参照が崩れてハマりやすいです。
+    - 推奨：uv run python -m agent_4_agent.deploy
+    - 非推奨：uv run python agent_4_agent/deploy.py
+- agent_engines.create 実行時は、デプロイ先でエージェントを動かすために必要なライブラリを requirements（依存関係）として明示する必要があります。
+    - ローカルで動いていても、Agent Engine 側の実行環境には自動で入らないためハマりがちです。
+    - requirements には ADK本体 + そのエージェントがimportしているもの（例：python-dotenv、google-cloud系、MCPクライアント等） を入れます。
+
+
+## agent engineの呼び方
+
+
+### pythonの場合
+
+以下ターミナルで実行します
+```bash
+uv run agent_4_agent/query.py
+```
+
+成功すれば、以下のように返答が返ってきます。
+```
+uv run agent_4_agent/query.py
+私はPMエージェントです。ユーザーの要望に基づいて、エージェント作成のための要件を明確にすることが主な役割です。
+
+具体的には、以下のことができます。
+
+1.  **ユーザーの要望の確認**: エージェントを作成したいというユーザーの初期の要望を理解します。
+2.  **要件の明確化**: 不明確な点があれば質問し、エージェントの名前 (agent_name)、目的 (goal)、調査方針 (research_brief)、そして作成者エージェント (creater_agent) への具体的な指示を決定します。
+...
+```
+
+
+### RESTAPIの場合
+
+
+```
+ACCESS_TOKEN=$(gcloud auth print-access-token)
+LOCATION=your_location
+AGENT_RESOURCE_NAME=your_agent_resource_name
+
+curl -N -X POST \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  "https://${LOCATION}-aiplatform.googleapis.com/v1/${AGENT_RESOURCE_NAME}:streamQuery" \
+  -d '{
+    "input": {
+      "message": "こんにちは、あなたは何ができますか？",
+      "user_id": "test_user_001"
+     } 
+  }'
+  ```
+
+成功すれば、返答が返ってきます。
