@@ -1,0 +1,107 @@
+name: GH PR Creator
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base branch'
+        required: true
+        default: 'main'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Verify Branch
+        run: |
+          if [ "${{ github.ref_name }}" = "${{ github.event.inputs.base }}" ]; then
+            echo "Error: Cannot create a PR from the base branch (${{ github.ref_name }})."
+            exit 1
+          fi
+          echo "Creating PR from: ${{ github.ref_name }} to ${{ github.event.inputs.base }}"
+
+      - name: Generate AI PR Description
+        id: ai_pr
+        if: env.GEMINI_API_KEY != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get changes between this branch and main
+          BASE_BRANCH="${{ github.event.inputs.base }}"
+          DIFF=$(git log origin/$BASE_BRANCH..HEAD --oneline --no-merges | head -n 20)
+          
+          if [ -z "$DIFF" ]; then
+            echo "TITLE=Automated PR from $(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+            echo "BODY=No significant changes detected." >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Call Gemini API for Title and Body
+          export DIFF_CONTENT="$DIFF"
+          RESULT=$(python3 -c "
+          import os, json, http.client
+          api_key = os.getenv('GEMINI_API_KEY')
+          diff = os.getenv('DIFF_CONTENT')
+          prompt = f'Following is a list of commit messages. Please generate a professional Pull Request title and a concise description in Japanese. Format as JSON with \"title\" and \"body\" keys.\n\n{diff}'
+          
+          conn = http.client.HTTPSConnection('generativelanguage.googleapis.com')
+          headers = {'Content-Type': 'application/json'}
+          payload = {
+              'contents': [{'parts': [{'text': prompt}]}]
+          }
+          conn.request('POST', f'/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}', json.dumps(payload), headers)
+          res = conn.getresponse()
+          data = json.loads(res.read().decode())
+          try:
+              text = data['candidates'][0]['content']['parts'][0]['text']
+              # Clean markdown if AI wrapped it in \`\`\`json
+              text = text.replace('\`\`\`json', '').replace('\`\`\`', '').strip()
+              print(text)
+          except:
+              print(json.dumps({'title': 'Manual PR Update', 'body': 'Updated via GitHub Action'}))
+          " )
+          
+          TITLE=$(echo "$RESULT" | jq -r .title)
+          BODY=$(echo "$RESULT" | jq -r .body)
+
+          # Escape for output
+          TITLE="${TITLE//'%'/'%25'}"
+          TITLE="${TITLE//$'\n'/'%0A'}"
+          TITLE="${TITLE//$'\r'/'%0D'}"
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}"
+          BODY="${BODY//$'\r'/'%0D'}"
+          
+          echo "TITLE=$TITLE" >> $GITHUB_OUTPUT
+          echo "BODY=$BODY" >> $GITHUB_OUTPUT
+        shell: bash {0}
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if PR already exists
+          EXISTS=$(gh pr list --head "${{ github.ref_name }}" --base "${{ github.event.inputs.base }}" --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTS" ]; then
+            echo "PR already exists: #$EXISTS. Updating title and body if AI generated."
+            gh pr edit "$EXISTS" --title "${{ steps.ai_pr.outputs.TITLE }}" --body "${{ steps.ai_pr.outputs.BODY }}"
+          else
+            gh pr create \
+              --base "${{ github.event.inputs.base }}" \
+              --head "${{ github.ref_name }}" \
+              --title "${{ steps.ai_pr.outputs.TITLE || 'Manual PR' }}" \
+              --body "${{ steps.ai_pr.outputs.BODY || 'Created via Manual PR Creator Action' }}"
+          fi

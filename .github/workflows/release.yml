@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,25 +23,25 @@ jobs:
 
       - name: Bump version
         id: bump_version
+        shell: bash
         run: |
-          # Get current version
-          CURRENT_VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f 2)
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Increment patch version (last digit)
-          NEW_VERSION=$(python3 -c "v = '$CURRENT_VERSION'.split('.'); v[-1] = str(int(v[-1]) + 1); print('.'.join(v))")
-          echo "New version: $NEW_VERSION"
-          
-          # Update pyproject.toml
+          set -euo pipefail
+          CURRENT_VERSION=$(grep '^version = ' pyproject.toml | cut -d '"' -f 2)
+          NEW_VERSION=$(python3 -c "v='$CURRENT_VERSION'.split('.'); v[-1]=str(int(v[-1])+1); print('.'.join(v))")
           sed -i 's/^version = "'$CURRENT_VERSION'"/version = "'$NEW_VERSION'"/' pyproject.toml
-          
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Commit and push changes
+        shell: bash
         run: |
+          set -euo pipefail
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add pyproject.toml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
           git commit -m "chore: bump version to ${{ steps.bump_version.outputs.VERSION }} [skip ci]"
           git push
 
@@ -50,79 +51,86 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          # Get PRs or Commits
+          set -euo pipefail
+
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          # Try getting PRs
           if [ -n "$LAST_TAG" ]; then
-            CONTENT_LIST=$(gh pr list --state merged --base main --limit 20 --json title --template '{{range .}}- {{.title}}\n{{end}}')
+            CONTENT_LIST=$(gh pr list --state merged --base main --limit 50 --json title \
+              --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
           else
-            CONTENT_LIST=$(gh pr list --state merged --limit 10 --json title --template '{{range .}}- {{.title}}\n{{end}}')
+            CONTENT_LIST=$(gh pr list --state merged --limit 20 --json title \
+              --template '{{range .}}- {{.title}}{{"\n"}}{{end}}')
           fi
 
-          # Fallback to commits if no PRs found
-          if [ -z "$CONTENT_LIST" ]; then
-            echo "No PRs found. Falling back to commit messages."
+          if [ -z "${CONTENT_LIST// }" ]; then
             if [ -n "$LAST_TAG" ]; then
-              CONTENT_LIST=$(git log ${LAST_TAG}..HEAD --oneline --no-merges | head -n 20)
+              CONTENT_LIST=$(git log "${LAST_TAG}..HEAD" --oneline --no-merges | head -n 50)
             else
-              CONTENT_LIST=$(git log --oneline --no-merges | head -n 10)
+              CONTENT_LIST=$(git log --oneline --no-merges | head -n 20)
             fi
           fi
-          
-          if [ -z "$CONTENT_LIST" ]; then
-            echo "SUMMARY=No significant changes found." >> $GITHUB_OUTPUT
-            exit 0
+
+          if [ -z "${CONTENT_LIST// }" ]; then
+            SUMMARY="- 内部改善（詳細なし）"
+          else
+            export CONTENT_LIST
+            SUMMARY=$(python3 - <<'PY'
+            import os, json, http.client
+
+            api_key = os.getenv("GEMINI_API_KEY")
+            content = os.getenv("CONTENT_LIST", "").strip()
+
+            prompt = f"""
+            あなたはリリースノート編集者です。以下の変更一覧（Pull Request / Commit）から、日本語で「What's New」を作成してください。
+
+            出力ルール（厳守）:
+            - 出力は箇条書きのみ（- で始まる行）。見出し/前置き/理由/注釈は禁止。
+            - 最大5項目。各項目は1文で簡潔に。
+            - 根拠のない推測は禁止（例: 「安定性向上」「パフォーマンス改善」など確実に言えないことは書かない）。
+            - 変更内容が不明瞭な場合は「内部改善（詳細なし）」と正直に書く。
+            - 「承知しました」などの前置きは不要。
+
+            変更一覧:
+            {content}
+            """.strip()
+
+            def call(prompt: str) -> str:
+                conn = http.client.HTTPSConnection("generativelanguage.googleapis.com")
+                payload = {"contents": [{"parts": [{"text": prompt}]}]}
+                conn.request(
+                    "POST",
+                    f"/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}",
+                    json.dumps(payload),
+                    {"Content-Type": "application/json"},
+                )
+                res = conn.getresponse()
+                body = res.read().decode("utf-8")
+                if res.status != 200:
+                    return "- 内部改善（詳細なし）"
+                data = json.loads(body)
+                text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                if not text:
+                    return "- 内部改善（詳細なし）"
+                if not text.lstrip().startswith("-"):
+                    text = "- " + text.replace("\n", " ").strip()
+                return text
+
+            try:
+                print(call(prompt))
+            except Exception:
+                print("- 内部改善（詳細なし）")
+            PY
+            )
           fi
 
-          # Call Gemini API using a heredoc to avoid quoting issues
-          export CONTENT_LIST="$CONTENT_LIST"
-          SUMMARY=$(python3 << 'EOF'
-          import os, json, http.client
-          api_key = os.getenv('GEMINI_API_KEY')
-          content = os.getenv('CONTENT_LIST')
-          prompt = f"""
-          以下は変更一覧（Pull Request / Commit）です。日本語で、リリースノート向けの「What's New」を作成してください。
-
-          # 出力ルール（厳守）
-          - 出力は箇条書き（- で始まる行）のみ。前置き、見出し、理由、注釈、選定理由、謝罪文、区切り線（---）は禁止。
-          - 最大5項目。各項目は1文で簡潔に。
-          - ユーザー価値に焦点。ただし、変更一覧から根拠なく推測しない（例：「安定性向上」「パフォーマンス改善」など一般化も、根拠がなければ書かない）。
-          - 変更内容が不明瞭な場合は「内部改善（詳細なし）」のように正直に書く。
-          - 記号や改行は通常のテキストとして出力（URLエンコードしない）。
-          - かしこまりました等は不要で、リリースノートの文章のみ出力して。
-
-          # 変更一覧
-          {content}
-          """.strip()
-          try:
-              conn = http.client.HTTPSConnection('generativelanguage.googleapis.com')
-              headers = {'Content-Type': 'application/json'}
-              payload = {
-                  'contents': [{'parts': [{'text': prompt}]}]
-              }
-              conn.request('POST', f'/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}', json.dumps(payload), headers)
-              res = conn.getresponse()
-              if res.status != 200:
-                  print(f"API Error: {res.status} {res.reason}")
-                  exit(0)
-              
-              data = json.loads(res.read().decode())
-              text = data['candidates'][0]['content']['parts'][0]['text']
-              print(text.strip())
-          except Exception as e:
-              print(f"Error during AI generation: {str(e)}")
-          EOF
-          )
-          
-          # Escape newlines for output
-          SUMMARY="${SUMMARY//'%'/'%25'}"
-          SUMMARY="${SUMMARY//$'\n'/'%0A'}"
-          SUMMARY="${SUMMARY//$'\r'/'%0D'}"
-          echo "SUMMARY=$SUMMARY" >> $GITHUB_OUTPUT
-        shell: bash {0}
-        continue-on-error: true
+          # ✅ multiline output (NO %0A)
+          {
+            echo "SUMMARY<<EOF"
+            echo "$SUMMARY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -130,10 +138,46 @@ jobs:
           tag_name: v${{ steps.bump_version.outputs.VERSION }}
           body: |
             ## ✨ What's New
-            ${{ steps.ai_summary.outputs.SUMMARY || 'AI summary not available.' }}
-
-          generate_release_notes: true
+            ${{ steps.ai_summary.outputs.SUMMARY || '- 内部改善（詳細なし）' }}
+          generate_release_notes: false
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete merged PR branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PRS=$(gh pr list --state merged --base main --limit 50 \
+            --json number,headRefName,headRepository \
+            --jq '.[] | @base64')
+
+          if [ -z "${PRS// }" ]; then
+            echo "No merged PRs found."
+            exit 0
+          fi
+
+          echo "$PRS" | while read -r row; do
+            _jq() { echo "$row" | base64 --decode | jq -r "$1"; }
+
+            pr_number=$(_jq '.number')
+            branch=$(_jq '.headRefName')
+            repo_full=$(_jq '.headRepository.nameWithOwner')
+
+            if [[ "$branch" == "main" || "$branch" == "master" || "$branch" == "develop" || "$branch" == release/* ]]; then
+              echo "Skip protected branch: $branch (PR #$pr_number)"
+              continue
+            fi
+
+            if ! gh api -H "Accept: application/vnd.github+json" "/repos/$repo_full/git/ref/heads/$branch" >/dev/null 2>&1; then
+              echo "Branch already deleted: $repo_full:$branch (PR #$pr_number)"
+              continue
+            fi
+
+            echo "Deleting branch: $repo_full:$branch (PR #$pr_number)"
+            gh api -X DELETE -H "Accept: application/vnd.github+json" "/repos/$repo_full/git/ref/heads/$branch" || true
+          done
