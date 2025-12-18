@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   release:
@@ -75,28 +76,33 @@ jobs:
             exit 0
           fi
 
-          # Call Gemini API
+          # Call Gemini API using a heredoc to avoid quoting issues
           export CONTENT_LIST="$CONTENT_LIST"
-          SUMMARY=$(python3 -c "
+          SUMMARY=$(python3 << 'EOF'
           import os, json, http.client
           api_key = os.getenv('GEMINI_API_KEY')
           content = os.getenv('CONTENT_LIST')
-          prompt = f'Following is a list of changes (Pull Requests or Commits). Please write a concise, friendly, and professional \"What\'s New\" summary for release notes in Japanese. Focus on the value to the user. Keep it under 5 bullet points.\n\n{content}'
-          
-          conn = http.client.HTTPSConnection('generativelanguage.googleapis.com')
-          headers = {'Content-Type': 'application/json'}
-          payload = {
-              'contents': [{'parts': [{'text': prompt}]}]
-          }
-          conn.request('POST', f'/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}', json.dumps(payload), headers)
-          res = conn.getresponse()
-          data = json.loads(res.read().decode())
+          prompt = f'Following is a list of changes (Pull Requests or Commits). Please write a concise, friendly, and professional "What\'s New" summary for release notes in Japanese. Focus on the value to the user. Keep it under 5 bullet points.\n\n{content}'
+
           try:
+              conn = http.client.HTTPSConnection('generativelanguage.googleapis.com')
+              headers = {'Content-Type': 'application/json'}
+              payload = {
+                  'contents': [{'parts': [{'text': prompt}]}]
+              }
+              conn.request('POST', f'/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}', json.dumps(payload), headers)
+              res = conn.getresponse()
+              if res.status != 200:
+                  print(f"API Error: {res.status} {res.reason}")
+                  exit(0)
+              
+              data = json.loads(res.read().decode())
               text = data['candidates'][0]['content']['parts'][0]['text']
               print(text.strip())
-          except:
-              print('AI summary generation failed.')
-          " )
+          except Exception as e:
+              print(f"Error during AI generation: {str(e)}")
+          EOF
+          )
           
           # Escape newlines for output
           SUMMARY="${SUMMARY//'%'/'%25'}"
