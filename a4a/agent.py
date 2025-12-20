@@ -9,28 +9,20 @@ from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
 load_dotenv() # .envファイルがあれば読み込む
 
 
-def load_remote_agents(config_name: str = "agents.yaml"):
+from .discovery import discover_agents
+
+def load_remote_agents():
     """
-    YAMLファイルからエージェント設定を読み込み、RemoteA2aAgentのリストを返します。
-    ファイルはこのスクリプトと同じディレクトリにあると想定します。
+    動的にエージェントを探索し、RemoteA2aAgentのリストを返します。
     """
-    current_dir = Path(__file__).parent
-    path = current_dir / config_name
+    configs = discover_agents()
     
-    if not path.exists():
-        print(f"Warning: Configuration file not found at {path}")
-        return []
-
-    with open(path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-
     agents = []
-    for agent_cfg in config.get("agents", []):
-        # print(f"Loading agent: {agent_cfg['name']} at {agent_cfg['url']}")
+    for cfg in configs:
         agent = RemoteA2aAgent(
-            name=agent_cfg["name"],
-            agent_card=agent_cfg["url"],
-            description=agent_cfg.get("description", "")
+            name=cfg.name,
+            agent_card=cfg.url,
+            description=cfg.description
         )
         agents.append(agent)
     

@@ -1,5 +1,0 @@
-agents:
-  - name: "okinawa_soba_search_agent"
-    url: "http://127.0.0.1:8001/.well-known/agent-card.json"
-    description: "沖縄そばの検索を専門とするエージェント"
-

@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-PORT = os.getenv("PORT", 8001)
+PORT = int(os.getenv("PORT", 8001))
 a2a_app = to_a2a(root_agent, port=PORT)
 
 if __name__ == "__main__":
