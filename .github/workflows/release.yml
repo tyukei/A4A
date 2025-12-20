@@ -100,7 +100,7 @@ jobs:
             SUMMARY="- 内部改善（詳細なし）"
           else
             export CONTENT_LIST
-            SUMMARY="$(python3 .github/scripts/generate_release_summary.py)"
+            SUMMARY="$(uv run python3 .github/scripts/generate_release_summary.py)"
           fi
 
           # ✅ 改行を潰さずに steps output として渡す
