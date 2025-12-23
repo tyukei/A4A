@@ -1,6 +1,6 @@
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents import ParallelAgent, SequentialAgent
-from .subagents import creater_agent, surfer_agent, searcher_agent, reviewer_agent, pm_final_report_agent
+from .subagents import creater_agent, surfer_agent, searcher_agent, reviewer_agent, pm_final_report_agent, tool_creater_agent
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -59,8 +59,8 @@ pm_instruction = """
 
 prepare_team_agent = ParallelAgent(
     name="prepare_team_agent",
-    description="searcher/surfer/creater を並列に実行する。",
-    sub_agents=[searcher_agent, surfer_agent, creater_agent],
+    description="searcher/surfer/creater/tool_creater を並列に実行する。",
+    sub_agents=[searcher_agent, surfer_agent, creater_agent, tool_creater_agent],
 )
 
 

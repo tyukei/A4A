@@ -25,7 +25,7 @@ wheels = [
 
 [[package]]
 name = "a4a"
-version = "0.1.20"
+version = "0.1.27"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
