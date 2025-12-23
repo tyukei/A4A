@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from google.adk.agents.function_tool import FunctionTool
+from google.adk.tools.function_tool import FunctionTool
 
 # カスタムツール作成用のツール
 def create_custom_tool(
@@ -69,7 +69,7 @@ def get_animal_location_map(location_name: str) -> str:
         # ツールファイルを作成
         with open(tool_file_path, "w") as f:
             # インポート文を追加
-            f.write("from google.adk.agents.function_tool import FunctionTool\n\n")
+            f.write("from google.adk.tools.function_tool import FunctionTool\n\n")
             
             # ツールコードを書き込み
             f.write(tool_code)
@@ -219,7 +219,7 @@ def edit_custom_tool(
         # ツールファイルを更新
         with open(tool_file_path, "w") as f:
             # インポート文を追加
-            f.write("from google.adk.agents.function_tool import FunctionTool\n\n")
+            f.write("from google.adk.tools.function_tool import FunctionTool\n\n")
             
             # 新しいツールコードを書き込み
             f.write(new_tool_code)

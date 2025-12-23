@@ -37,6 +37,7 @@ tool_creater_instruction = """
 - docstringで引数と戻り値を明確に記述
 - 必要なインポートは関数内に記述（例: from urllib.parse import quote）
 - エラーハンドリングを含める
+- 別途APIが必要になりそうな関数は作成しないで、geminiでweb検索するだけでも良い
 
 【例】
 ```python
@@ -54,7 +55,7 @@ def get_animal_location_map(location_name: str) -> str:
     destination = location_name
     encoded_origin = quote(origin)
     encoded_destination = quote(destination)
-    maps_url = f"https://www.google.com/maps/dir/?api=1&origin={encoded_origin}&destination={encoded_destination}&travelmode=driving"
+    maps_url = "https://www.google.com/maps/dir/?api=1&origin=" + encoded_origin + "&destination=" + encoded_destination + "&travelmode=driving"
     return maps_url
 ```
 
@@ -62,6 +63,7 @@ def get_animal_location_map(location_name: str) -> str:
 - agent_name引数を指定すると、特定のエージェント用のツールとして作成できます
 - 指定しない場合はagent_4_agentのtoolsディレクトリに作成されます
 - 作成後は、エージェントのagent.pyにインポート文を追加する必要があることをユーザーに伝えてください
+- ダミーで動かないようなtoolは作成しないでください
 """
 
 tool_creater_agent = Agent(
