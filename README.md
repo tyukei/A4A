@@ -532,6 +532,14 @@ A4Aは、このボトルネックを解消するための実験です。
 
 最終的には、人間が寝ている間に勝手にシステムが良くなっていく「自己進化」を見たいなと思っています。
 
+現在のアーキテクチャ
+![alt text](assets/image-feature-1.png)
+
+妄想のアーキテクチャ
+![alt text](assets/image-feature-2.png)
+
+妄想(part2)のアーキテクチャ
+![alt text](assets/image-feature-3.png)
 
 
 ## できるかもしれないユースケース(妄想)
