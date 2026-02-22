@@ -57,10 +57,11 @@ def main():
         # Keep main thread alive and monitor processes
         while True:
             time.sleep(1)
-            # Check if any process has exited unexpectedly
-            for p in processes:
-                if p.poll() is not None:
-                    print(f"Process {p.args} exited with code {p.returncode}")
+            # Remove and report processes that have exited
+            dead = [p for p in processes if p.poll() is not None]
+            for p in dead:
+                print(f"Process {p.args} exited with code {p.returncode}")
+                processes.remove(p)
     except Exception as e:
         print(f"Error: {e}")
         cleanup(None, None)

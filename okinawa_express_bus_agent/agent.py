@@ -4,9 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 MODEL = os.environ.get("MODEL", "gemini-3-flash-preview")
 
-# 追加: Web検索ツールのインポート
-from google.generative_ai.tools import Tool
-web_search = Tool.from_google_api(name="web_search", api_id="web_search")
+from google.adk.tools import google_search
 
 # 追加: カスタムツールのインポート
 from .tools.format_okinawa_express_bus_info_tool import format_okinawa_express_bus_info_tool
@@ -61,5 +59,5 @@ root_agent = Agent(
     model="gemini-3-flash-preview",
     description=_description,
     instruction=_instruction,
-    tools=[web_search, format_okinawa_express_bus_info_tool], # ツールの追加
+    tools=[google_search, format_okinawa_express_bus_info_tool],
 )

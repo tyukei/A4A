@@ -1,4 +1,4 @@
-.PHONY: run query clean help
+.PHONY: run query ui clean help
 
 PYTHON := python
 
@@ -6,10 +6,14 @@ help:
 	@echo "Available commands:"
 	@echo "  make run         - Start all agents (Coordinator + Sub-agents)"
 	@echo "  make query q=... - Send a query to the coordinator (e.g., make query q='Hello')"
+	@echo "  make ui          - Start the Web GUI (http://localhost:8888)"
 	@echo "  make clean       - Kill all Python processes related to this project (zombie cleanup)"
 
 run:
 	$(PYTHON) -m a4a.run_all
+
+ui:
+	$(PYTHON) -m a4a.web
 
 query:
 	@if [ -z "$(q)" ]; then \
