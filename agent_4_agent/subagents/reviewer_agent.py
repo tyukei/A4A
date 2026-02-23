@@ -22,19 +22,19 @@ PMの要件と prepare_team_agent（searcher/surfer/creator/tool_creator）の�
 4. prepare_team_agentの出力内容を踏まえて、_description、_instructionを改善する
 5. list_custom_tools_tool(agent_name=agent_name) でカスタムツール一覧を確認する
 6. ツールが存在する場合:
-   a. get_custom_tool_tool で各ツールのコードを確認し、関数名と tool 変数名（例: {tool_name}_tool）を把握する
+   a. get_custom_tool_tool で各ツールのコードを確認し、関数名と tool 変数名（例: TOOL_NAME_tool）を把握する
    b. tools/__init__.py を更新する:
       - get_agent_file_tool(agent_name, "tools/__init__.py") で現在の内容を取得する
       - 各ツールのインポートを追加する:
-        from .{tool_name}_tool import {tool_name}_tool
+        from .TOOL_NAME_tool import TOOL_NAME_tool
       - __all__ にツール変数名を追加する:
-        __all__ = ["{tool_name}_tool", ...]
+        __all__ = ["TOOL_NAME_tool", ...]
       - edit_agent_file_tool(agent_name, "tools/__init__.py", new_content) で書き込む
    c. agent.py を更新する:
       - 先頭に以下のインポート文を追加する:
-        from .tools import {tool_name}_tool
+        from .tools import TOOL_NAME_tool
       - Agent の tools=[] にツール変数を追加する:
-        tools=[{tool_name}_tool, ...]
+        tools=[TOOL_NAME_tool, ...]
 7. edit_agent_file_toolを使って、更新した agent.py を書き込む
 8. PMに「最終成果物の要約 + 更新したポイント（ツール接続状況を含む）+ 次の改善案」を報告する
 

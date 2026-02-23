@@ -4,6 +4,7 @@ from .searcher_agent import searcher_agent
 from .reviewer_agent import reviewer_agent
 from .pm_final_report_agent import pm_final_report_agent
 from .tool_creator_agent import tool_creator_agent
+from .quality_reporter_agent import quality_reporter_agent
 
 __all__ = [
     "creator_agent",
@@ -12,4 +13,5 @@ __all__ = [
     "reviewer_agent",
     "pm_final_report_agent",
     "tool_creator_agent",
+    "quality_reporter_agent",
 ]

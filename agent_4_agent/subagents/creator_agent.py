@@ -24,30 +24,28 @@ PMからの指示がまだない場合は待機してください。
 
 ## ツールの作り方（重要）
 
-ツールを作る場合は **create_custom_tool_tool** を使い、以下のルールを守ること。
+ツールを作る場合は create_custom_tool_tool を使い、以下のルールを守ること。
 
-### OK 良いツールの例（URLを動的生成する）
+### OK: 良いツールの例（URLを動的生成する）
 
 ```python
 def search_youtube(keyword: str) -> str:
-    """キーワードのYouTube検索URLを返します。"""
     from urllib.parse import quote
-    url = f"https://www.youtube.com/results?search_query={quote(keyword)}"
-    return f"YouTube検索: {url}"
+    url = "https://www.youtube.com/results?search_query=" + quote(keyword)
+    return "YouTube検索: " + url
 
 def get_route_map(destination: str) -> str:
-    """那覇空港から目的地までのGoogle MapsルートURLを返します。"""
     from urllib.parse import quote
     url = (
         "https://www.google.com/maps/dir/?api=1"
-        f"&origin={quote('那覇空港')}"
-        f"&destination={quote(destination)}"
-        "&travelmode=driving"
+        + "&origin=" + quote("那覇空港")
+        + "&destination=" + quote(destination)
+        + "&travelmode=driving"
     )
-    return f"ルート: {url}"
+    return "ルート: " + url
 ```
 
-### NG 避けるべきパターン（ダミーデータ）
+### NG: 避けるべきパターン（ダミーデータ）
 
 ```python
 # NG: ハードコードされた辞書はダミーデータになる
@@ -91,12 +89,13 @@ root_agent = Agent(
 ```
 
 ### ツールありのテンプレート（create_custom_tool_tool で作成後）
+ツール名を TOOL_NAME とした場合の例:
 
 ```python
 from google.adk.agents.llm_agent import Agent
 import os
 from dotenv import load_dotenv
-from .tools.{tool_name}_tool import {tool_name}_tool
+from .tools.TOOL_NAME_tool import TOOL_NAME_tool
 load_dotenv()
 MODEL = os.environ.get("MODEL", "gemini-3-flash-preview")
 _name = "TODO"
@@ -110,9 +109,11 @@ root_agent = Agent(
     model=MODEL,
     description=_description,
     instruction=_instruction,
-    tools=[{tool_name}_tool],
+    tools=[TOOL_NAME_tool],
 )
 ```
+
+TOOL_NAME の部分は実際のツール関数名に置き換えること（例: search_youtube）。
 '''
 
 creator_agent = Agent(

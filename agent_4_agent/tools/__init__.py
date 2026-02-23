@@ -6,3 +6,4 @@ from .edit_tool import (
     edit_custom_tool_tool,
     delete_custom_tool_tool
 )
+from .github_issue_tool import create_github_issue_tool
