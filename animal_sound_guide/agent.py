@@ -1,7 +1,7 @@
 from google.adk.agents.llm_agent import Agent
 import os
 from dotenv import load_dotenv
-from .tools.get_animal_sound_info_tool import get_animal_sound_info_tool
+from .tools import get_animal_sound_info_tool, search_animal_youtube_tool, get_animal_location_map_tool
 
 load_dotenv()
 
@@ -56,5 +56,5 @@ root_agent = Agent(
     model=MODEL,
     description=_description,
     instruction=_instruction,
-    tools=[get_animal_sound_info_tool],
+    tools=[get_animal_sound_info_tool, search_animal_youtube_tool, get_animal_location_map_tool],
 )
