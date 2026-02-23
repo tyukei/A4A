@@ -8,6 +8,7 @@ dependencies = [
     "google-adk[a2a]>=1.21.0",
     "google-cloud-aiplatform[adk,agent-engines]>=1.132.0",
     "python-dotenv>=1.2.1",
+    "line-bot-sdk>=3.0.0",
     "uvicorn>=0.27.0",
     "fastapi>=0.109.0",
     "pyyaml>=6.0.3",
