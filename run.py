@@ -187,23 +187,46 @@ async def run_create(prompt: str, context: str) -> str:
     return await _conversation_loop(runner, session_service, "a4a_cli", prompt, context)
 
 
-async def run_review(agent_name: str) -> None:
-    """quality_reporter_agent を実行して GitHub issue を起票する"""
+async def run_agent_review(agent_name: str) -> None:
+    """[レビュー①] quality_reporter_agent: 作成したエージェントのコード品質をレビュー"""
     from agent_4_agent.subagents.quality_reporter_agent import quality_reporter_agent
 
     runner, session_service = _make_runner(quality_reporter_agent, "review_cli")
     prompt = f"{agent_name} のコードレビューをして、改善点があれば GitHub issue を作成してください。"
     print("\n" + "=" * 60)
-    print(f"品質レビュー中: {agent_name}")
+    print(f"[レビュー①] 作成エージェントの品質レビュー中: {agent_name}")
     print("=" * 60)
     await _stream(runner, session_service, "review_cli", prompt)
+
+
+async def run_system_review() -> None:
+    """[レビュー②] system_reviewer_agent: A4Aフレームワーク自体の改善提案"""
+    from agent_4_agent.subagents.system_reviewer_agent import system_reviewer_agent
+
+    runner, session_service = _make_runner(system_reviewer_agent, "sys_review_cli")
+    prompt = "agent_4_agent のコードを読んで、フレームワークとしての改善提案を GitHub issue に登録してください。"
+    print("\n" + "=" * 60)
+    print("[レビュー②] A4Aシステム自体の改善提案中...")
+    print("=" * 60)
+    await _stream(runner, session_service, "sys_review_cli", prompt)
+
+
+async def run_create_pr(agent_name: str, description: str = "") -> None:
+    """新しく作成されたエージェントの GitHub PR を作成する"""
+    from agent_4_agent.tools.github_pr_tool import create_github_pr
+
+    print("\n" + "=" * 60)
+    print(f"PR作成中: {agent_name}")
+    print("=" * 60)
+    result = create_github_pr(agent_name, description)
+    print(result)
 
 
 async def main_async(
     prompt: str | None, idea: str | None, review: bool, review_only: str | None
 ) -> None:
     if review_only:
-        await run_review(review_only)
+        await run_agent_review(review_only)
         return
 
     # --idea が指定されている場合はLLMでプロンプトを生成する
@@ -216,13 +239,22 @@ async def main_async(
 
     output = await run_create(prompt, context=idea or prompt)
 
+    # PR作成（作成されたエージェントを自動的にPRへ）
+    agent_name = _extract_agent_name(output)
+    if agent_name:
+        await run_create_pr(agent_name, description=idea or "")
+    else:
+        print("\nagent_name を出力から特定できませんでした。PRは手動で作成してください。")
+
     if review:
-        agent_name = _extract_agent_name(output)
+        # ① 作成エージェントのコードレビュー
         if agent_name:
-            await run_review(agent_name)
+            await run_agent_review(agent_name)
         else:
-            print("\nagent_name を出力から特定できませんでした。")
-            print("手動でレビューする場合: python run.py --review-only <agent_name>")
+            print("\n手動でレビューする場合: python run.py --review-only <agent_name>")
+
+        # ② A4Aシステム自体のレビュー
+        await run_system_review()
 
 
 def main() -> None:
@@ -250,7 +282,7 @@ def main() -> None:
     parser.add_argument(
         "--review",
         action="store_true",
-        help="作成後にコードレビューして GitHub issue を起票する",
+        help="作成後に2種類のレビューを実行: ①作成エージェントの品質レビュー ②A4Aシステム自体の改善提案",
     )
     parser.add_argument(
         "--review-only",

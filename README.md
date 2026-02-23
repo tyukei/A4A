@@ -34,11 +34,22 @@ cp agent_4_agent/.env.example agent_4_agent/.env
 # .envファイルにGEMINI_API_KEYを設定
 # https://aistudio.google.com/api-keys
 
-# A4Aを起動
+# Web UI を起動
 adk web
 ```
 
 ブラウザで http://127.0.0.1:8000 を開いて、エージェント作成を始めましょう！
+
+```bash
+# CLI で全自動作成（Web UI 不要）
+# エージェント作成 → GitHub PR 提出まで自動
+python run.py --idea "作りたいエージェントのキーワード"
+
+# エージェント作成 → PR提出 → レビュー + GitHub issue 起票まで全自動
+python run.py --idea "天気" --review
+```
+
+詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するrunpy) をご覧ください。
 
 詳細な手順は [セットアップと実行ガイド](docs/setup_and_execution.md) をご覧ください。
 
@@ -69,6 +80,8 @@ adk web
 ## できること
 
 - **エージェント作成**: ADKでエージェントを対話的に作成
+- **PR自動提出**: 作成したエージェントをそのままGitHub PRとして提出
+- **品質レビュー**: コード品質・instruction完成度をAIが自動レビューしてissue起票
 - **A2A連携**: 作成したエージェントをA2Aでつなげる
 - **自動ディプロイ**: Agent Engineへのディプロイ（WIP）
 
