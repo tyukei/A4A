@@ -10,12 +10,37 @@ from linebot.v3.messaging import (
     TextMessage
 )
 from dotenv import load_dotenv
-from tools.send_line_notification_tool import send_line_notification
 
 load_dotenv()
 
 # モデルを環境変数から取得（デフォルトはリポジトリでよく使われているもの）
 MODEL = os.environ.get("MODEL", "gemini-3-flash-preview")
+
+def send_line_notification(message: Annotated[str, "送信するメッセージ内容"]) -> str:
+    """
+    LINE Messaging APIを使用して、指定されたメッセージをユーザーにプッシュ通知します。
+    環境変数 LINE_CHANNEL_ACCESS_TOKEN と LINE_USER_ID が設定されている必要があります。
+    """
+    # 環境変数名から取得するように修正
+    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+    user_id = os.environ.get("LINE_USER_ID")
+    
+    if not token or not user_id:
+        return "エラー: 環境変数 LINE_CHANNEL_ACCESS_TOKEN または LINE_USER_ID が設定されていません。"
+
+    try:
+        configuration = Configuration(access_token=token)
+        with ApiClient(configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            push_message_request = PushMessageRequest(
+                to=user_id,
+                messages=[TextMessage(text=message)]
+            )
+            line_bot_api.push_message(push_message_request)
+        return f"LINE通知を送信しました: {message}"
+    except Exception as e:
+        return f"通知送信中にエラーが発生しました: {str(e)}"
+
 def wait_for_seconds(seconds: Annotated[int, "待機する秒数"]) -> str:
     """指定された秒数分だけプログラムの実行を待機（スリープ）します。"""
     time.sleep(seconds)
