@@ -2,13 +2,13 @@ from google.adk.tools.function_tool import FunctionTool
 
 
 def generate_useless_message() -> str:
-    """�ł����ʂȃ��b�Z�[�W�𐶐����܂��B
+    """最も無駄なメッセージを生成します。
 
     Returns:
-        ��ɓ������ʂȃ��b�Z�[�W
+        常に同じ無駄なメッセージ
     """
-    return "����������A���ɉ��������A�������m���ɑ��݂��Ă��܂��B"
+    return "今日も一日、特に何もせず、しかし確実に存在しています。"
 
 
-# FunctionTool�Ƃ��ēo�^
+# FunctionToolとして登録
 generate_useless_message_tool = FunctionTool(func=generate_useless_message)
