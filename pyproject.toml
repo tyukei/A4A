@@ -1,6 +1,6 @@
 [project]
 name = "a4a"
-version = "0.2.15"
+version = "0.2.16"
 description = "This project is A4A(Agent for Agent) of T2A(Text to Agent) and aim to CoA(Chain of AI) on AOTL(AI On The Loop)"
 readme = "README.md"
 requires-python = ">=3.12"
