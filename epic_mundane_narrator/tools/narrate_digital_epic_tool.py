@@ -10,7 +10,6 @@ def narrate_digital_epic(user_input: str) -> str:
     Returns:
         str: 入力された文字列を英雄として扱い、過剰にドラマチックな文体で構成した物語テキスト
     """
-    import random
 
     if not user_input:
         return "虚無さえも、この物語の舞台にはなり得ぬ。"
