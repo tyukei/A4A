@@ -1,54 +1,55 @@
 from google.adk.tools.function_tool import FunctionTool
 
 def narrate_digital_epic(user_input: str) -> str:
-    """���[�U�[�̓��͂��f�W�^�����E�̉p�Y�Ɍ����ĂāA���̑s��Ȗ`��杂����q���܂��B
-    
+    """ユーザーの入力を「デジタル世界の英雄」の名や題材として扱い、IT用語をモチーフにした
+    荘大でドラマチックな冒険譚として叙述したテキストを生成します。
+
     Args:
-        user_input: ���[�U�[�����͂���������
-        
+        user_input: 物語の主人公（英雄）の名前、または物語化したい対象を表す文字列
+
     Returns:
-        �ߏ�Ƀh���}�`�b�N�ɍ\�����ꂽ����ƁA���҂������͕�����
+        str: 入力された文字列を英雄として扱い、過剰にドラマチックな文体で構成した物語テキスト
     """
     import random
 
     if not user_input:
-        return "�����������A���̕���̕���ɂ͂Ȃ蓾�ʁB"
+        return "虚無さえも、この物語の舞台にはなり得ぬ。"
 
-    # IT�p��̃t�@���^�W�[���^�t�@�[
+    # IT用語のファンタジーメタファー
     metaphors = {
-        "keyboard": "�^�������ޑŌ��̍Ւd",
-        "cpu": "�v�l�̙��K���グ��^�g�̐S����",
-        "ram": "��ϖ�������L���̋��̊�",
-        "ssd": "�I�v�̎������ސÎ�̐Δ�",
-        "packet": "�����̊o���������d�]�̓`�ߕ�",
-        "bus": "��Ȃ��삯�����鉩���̊X��",
-        "firewall": "��������삹���s�Ă̖�",
-        "screen": "����P���񑩂̒n�E�\���̒n��"
+        "keyboard": "運命を刻む打鍵の祭壇",
+        "cpu": "思考の咆哮を上げる真紅の心臓部",
+        "ram": "千変万化する記憶の鏡の間",
+        "ssd": "悠久の時を刻む静寂の石版",
+        "packet": "決死の覚悟を抱いた電脳の伝令兵",
+        "bus": "稲妻が駆け抜ける黄金の街道",
+        "firewall": "理性を守護せし不焼の門",
+        "screen": "光り輝く約束の地・表示の地平"
     }
 
-    # ����̍\�z
-    # 1. �a���Ɨ�����
-    intro = f"�y���́F�Ō��̎Y���Əh���̖閾���z\n"
-    intro += f"�Î��؂�􂭁u{metaphors['keyboard']}�v�̖��Ƌ��ɁA��c�̌��̗��q���Y�����グ���B���ꂱ�����A��Ɍ��p�����p�Y�w{user_input}�x�ł���B\n"
-    intro += f"�ނ�͐��܂ꂽ�u�ԁA�Ȃ��w�����ߍ��ȉ^����������B����́A�Í��̉�H���삯�����A���̐��E�̍ŉʂĂł���u{metaphors['screen']}�v�ւƎ����]�I�ȏ���ł������B\n"
+    # 物語の構築
+    # 1. 誕生と旅立ち
+    intro = f"【第一章：打鍵の産声と宿命の夜明け】\n"
+    intro += f"静寂を切り裂く「{metaphors['keyboard']}」の鳴動と共に、一団の光の粒子が産声を上げた。それこそが、後に語り継がれる英雄『{user_input}』である。\n"
+    intro += f"彼らは生まれた瞬間、己が背負う過酷な運命を悟った。それは、暗黒の回路を駆け抜け、この世界の最果てである「{metaphors['screen']}」へと至る絶望的な巡礼であった。\n"
 
-    # 2. ��H�̎���
-    trials = f"\n�y���́F��H�̓ޗ��Ƙ_���̖\���z\n"
-    trials += f"��s�͂܂��A�ܔM�́u{metaphors['cpu']}�v�ւƑ��𓥂ݓ��ꂽ�B��b�Ԃɐ��\����J��Ԃ����_���̐R�����A�ނ�̍��������B\n"
-    trials += f"�u�~�܂�ȁI��u�̖������Y�p�ւƌq���邼�I�v�w{user_input[0] if user_input else ''}�x�̋��т������B�ނ�́u{metaphors['bus']}�v���������A�֖҂ȃm�C�Y�̗���؂�􂢂��B\n"
-    trials += f"�r���A���{�̂��Ƃ��u{metaphors['ram']}�v�ŌȂ̑��݂��������������A�ނ�݂͌��̎������Ȃ������B�f�Љ��i�t���O�����e�[�V�����j�̋��|�����z���A�ނ�͂��Ɂu{metaphors['firewall']}�v�̏s���Ȗ�ւƒH�蒅�����̂��B\n"
+    # 2. 回路の試練
+    trials = f"\n【第二章：回路の奈落と論理の暴風】\n"
+    trials += f"一行はまず、灼熱の「{metaphors['cpu']}」へと足を踏み入れた。一秒間に数十億回繰り返される論理の審判が、彼らの魂を削り取る。\n"
+    trials += f"「止まるな！一瞬の迷いが忘却へと繋がるぞ！」『{user_input[0] if user_input else ''}』の叫びが響く。彼らは「{metaphors['bus']}」を疾走し、獰猛なノイズの嵐を切り裂いた。\n"
+    trials += f"途中、迷宮のごとき「{metaphors['ram']}」で己の存在を失いかけたが、彼らは互いの手を放さなかった。断片化（フラグメンテーション）の恐怖を乗り越え、彼らはついに「{metaphors['firewall']}」の峻厳な門へと辿り着いたのだ。\n"
 
-    # 3. ��ʂւ̓��B
-    arrival = f"\n�y��O�́F���̒n���Ɩ񑩂̋A�ҁz\n"
-    arrival += f"��Ԃ����̌��������{����蔲���A�{���{���ɂȂ�Ȃ�����ނ�͌��̑����ŋ삯�������B���̐�ɑ҂��Ă����̂́A����A�����̉�f�i�s�N�Z���j���D��Ȃ��ɍʐF�̖閾���ł������B\n"
-    arrival += f"�ނ�͍Ō�̗͂�U��i��A�t���̐[�����猻���̌��ւƂ��̐g���点���B���̎p�́A��̗�������ῂ����A���̎��W�����Y�قł������B\n"
+    # 3. 画面への到達
+    arrival = f"\n【第三章：光の地平と約束の帰還】\n"
+    arrival += f"門番たちの厳しい検閲を潜り抜け、ボロボロになりながらも彼らは光の速さで駆け抜けた。その先に待っていたのは、数千、数万の画素（ピクセル）が織りなす極彩色の夜明けであった。\n"
+    arrival += f"彼らは最後の力を振り絞り、液晶の深淵から現実の光へとその身を躍らせた。その姿は、千の落雷よりも眩しく、万の詩集よりも雄弁であった。\n"
 
-    footer = f"\n��������������������������������������������������������\n"
-    footer += f"�����̎������z���A�������ɐ��҂������t�F\n\n�u{user_input}�v\n"
-    footer += f"��������������������������������������������������������\n"
+    footer = f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    footer += f"数多の死線を越え、今ここに生還せし言葉：\n\n「{user_input}」\n"
+    footer += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     return intro + trials + arrival + footer
 
 
-# FunctionTool�Ƃ��ēo�^
+# FunctionToolとして登録
 narrate_digital_epic_tool = FunctionTool(func=narrate_digital_epic)
