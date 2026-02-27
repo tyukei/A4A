@@ -19,8 +19,8 @@ def discover_agents(root_dir: Path = None, start_port: int = 8001) -> list[Agent
     Falls back to root_dir if agents/ does not exist.
     """
     if root_dir is None:
-        # Assume root is the parent of 'a4a' folder, or current working directory
-        # If running as -m a4a.run_all, cwd is usually root.
+        # Assume root is the parent of 'a4a_lab' folder, or current working directory
+        # If running as -m a4a_lab.run_all, cwd is usually root.
         root_dir = Path.cwd()
 
     agents = []
@@ -35,7 +35,7 @@ def discover_agents(root_dir: Path = None, start_port: int = 8001) -> list[Agent
         if not item.is_dir():
             continue
 
-        if item.name.startswith(".") or item.name == "a4a" or item.name == "__pycache__":
+        if item.name.startswith(".") or item.name == "a4a_lab" or item.name == "__pycache__":
             continue
 
         a2a_path = item / "a2a_agent.py"

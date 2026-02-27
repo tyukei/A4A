@@ -11,7 +11,7 @@ A4Aでは、この仕組みを使って**小さな専門エージェントを組
 複数のエージェントを連携させて実行する機能です。
 
 ### 仕組み
-1. **Runner (Coordinator)**: `a4a.agent` が全体を統括するコーディネーターとして機能します。
+1. **Runner (Coordinator)**: `a4a_lab.agent` が全体を統括するコーディネーターとして機能します。
 2. **Sub-agents**: A4Aで作ったエージェント`okinawa_soba_search_agent` や `palm_tree_info_agent` などは、それぞれ専門機能を持つエージェントとして起動します。
 3. **Automated Discovery**: `a4a/discovery.py` が `agents/` サブディレクトリ内のエージェント（`a2a_agent.py` を持つフォルダ）を自動検出し、コーディネーターに「使える手札」として登録します。
 
