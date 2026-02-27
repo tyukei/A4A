@@ -1,0 +1,72 @@
+import os
+import sys
+import importlib
+from pathlib import Path
+from dataclasses import dataclass
+
+@dataclass
+class AgentConfig:
+    name: str
+    module: str
+    port: int
+    url: str
+    description: str
+
+def discover_agents(root_dir: Path = None, start_port: int = 8001) -> list[AgentConfig]:
+    """
+    Scans the agents/ subdirectory for agents.
+    An agent is a directory containing an 'a2a_agent.py' file.
+    Falls back to root_dir if agents/ does not exist.
+    """
+    if root_dir is None:
+        # Assume root is the parent of 'a4a_lab' folder, or current working directory
+        # If running as -m a4a_lab.run_all, cwd is usually root.
+        root_dir = Path.cwd()
+
+    agents = []
+    current_port = start_port
+
+    # agents/ サブディレクトリを優先して走査する
+    agents_dir = root_dir / "agents"
+    scan_dir = agents_dir if agents_dir.exists() else root_dir
+
+    # List all subdirectories
+    for item in scan_dir.iterdir():
+        if not item.is_dir():
+            continue
+
+        if item.name.startswith(".") or item.name == "a4a_lab" or item.name == "__pycache__":
+            continue
+
+        a2a_path = item / "a2a_agent.py"
+        if a2a_path.exists():
+            agent_name = item.name
+            module_name = f"{agent_name}"
+            a2a_module_name = f"{agent_name}.a2a_agent"
+
+            # Try to import to get description (optional, but good for coordinator)
+            description = ""
+            try:
+                # scan_dir を sys.path に追加してインポートできるようにする
+                if str(scan_dir) not in sys.path:
+                    sys.path.insert(0, str(scan_dir))
+
+                # Assume naming convention: package exports 'root_agent' in __init__
+                mod = importlib.import_module(module_name)
+                if hasattr(mod, "root_agent"):
+                    description = getattr(mod.root_agent, "description", "")
+            except Exception as e:
+                print(f"Warning: Could not import {module_name} to read description: {e}")
+                description = f"Agent {agent_name}"
+
+            config = AgentConfig(
+                name=agent_name,
+                module=a2a_module_name,
+                port=current_port,
+                url=f"http://127.0.0.1:{current_port}/.well-known/agent-card.json",
+                description=description,
+            )
+            agents.append(config)
+            current_port += 1
+
+    return agents

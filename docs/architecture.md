@@ -69,7 +69,7 @@ https://codelabs.developers.google.com/intro-a2a-purchasing-concierge#9
 ### コンポーネント一覧
 
 #### 1. Runner / Coordinator
-- ファイル例：`a4a.agent`
+- ファイル例：`a4a_lab.agent`
 - 役割：
   - ユーザーの入力を受け取る
   - 利用可能なエージェントを把握する
@@ -92,16 +92,17 @@ https://codelabs.developers.google.com/intro-a2a-purchasing-concierge#9
 
 - 実装：`a4a/discovery.py`
 - 役割：
-  - プロジェクト内のフォルダを走査
+  - `agents/` サブディレクトリ内のフォルダを走査（`agents/` がない場合はルートを走査）
   - `a2a_agent.py` を持つエージェントを自動検出
   - Coordinator に「使えるエージェント」として登録
 
 ```text
 project/
- ├── okinawa_soba_agent/
- │    └── a2a_agent.py
- ├── palm_tree_agent/
- │    └── a2a_agent.py
+ ├── agents/
+ │    ├── okinawa_soba_agent/
+ │    │    └── a2a_agent.py
+ │    └── palm_tree_agent/
+ │         └── a2a_agent.py
 ```
 
 ---

@@ -51,12 +51,12 @@ uv add python-dotenv google-adk
 
 ## エージェント作成
 
-ADK webを使ってエージェントを作成するため、ルートディレクトリの配下に`{agent_name}`というフォルダを作成します。
+ADK webを使ってエージェントを作成するため、`agents/` ディレクトリの配下に`{agent_name}`というフォルダを作成します。
 
 その中に`agent.py`を作成し、エージェントのコードを書きます。
 
 > **重要**: Run this command from the parent directory that contains your my_agent/ folder. For example, if your agent is inside agents/my_agent/, run adk web from the agents/ directory.
-> 
+>
 > 参考: https://google.github.io/adk-docs/get-started/python/#run-with-web-interface
 
 ---
@@ -69,15 +69,16 @@ ADKを使ったエージェントのフォルダ構成例は以下の通りで�
 
 ```
 {project_name}/
- ├── {agent_name}/
- │    ├── sub_agents/
- │    │    ├── {sub_agent1}.py　# サブエージェントがある場合
- │    │    └── ...
- │    ├── .env　# 環境変数ファイル
- │    ├── agent.py　# エージェント定義ファイル
- │    └── tools/　# ツール定義ファイル
- │         ├── {tool1}.py
- │         └── ...
+ ├── agents/　# A4Aが生成したエージェントの格納先
+ │    └── {agent_name}/
+ │         ├── sub_agents/
+ │         │    ├── {sub_agent1}.py　# サブエージェントがある場合
+ │         │    └── ...
+ │         ├── .env　# 環境変数ファイル
+ │         ├── agent.py　# エージェント定義ファイル
+ │         └── tools/　# ツール定義ファイル
+ │              ├── {tool1}.py
+ │              └── ...
  ├── pyproject.toml　# uvのプロジェクト設定ファイル
  └── .venv/　# uvの仮想環境フォルダ
 ```
@@ -170,7 +171,7 @@ my_tool = FunctionTool(
 ADKの場合、UIは`adk web`コマンドで起動します。
 
 ```bash
-adk web
+adk web src/
 ```
 
 ブラウザで以下にアクセスしてください：
@@ -202,7 +203,7 @@ source .venv/bin/activate
 必要なパッケージがインストールされていない可能性があります：
 
 ```bash
-uv sync
+uv sync --frozen
 ```
 
 ---
@@ -213,11 +214,11 @@ uv sync
 
 ```bash
 uv init -p=3.12
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 uv add google-adk python-dotenv
 adk create agent_4_agent
-echo "GOOGLE_API_KEY=your_google_api_key" >> agent_4_agent/.env
+echo "GOOGLE_API_KEY=your_google_api_key" >> src/agent_4_agent/.env
 ```
 
 ---

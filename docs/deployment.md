@@ -124,7 +124,7 @@ Resource Name: projects/xxxx/locations/region/reasoningEngines/xxxxxxxxx
 uv run python -m agent_4_agent.deploy
 
 # 非推奨
-uv run python agent_4_agent/deploy.py
+uv run python src/agent_4_agent/deploy.py
 ```
 
 `-m`オプションを付けないと、パッケージ（モジュール）として認識されず、相対importやパッケージ内参照が崩れてハマりやすいです。
@@ -170,13 +170,13 @@ reasoning_engine = reasoning_engines.ReasoningEngine.create(
 以下のコマンドをターミナルで実行します：
 
 ```bash
-uv run agent_4_agent/query.py
+uv run python src/agent_4_agent/query.py
 ```
 
 成功すれば、以下のように返答が返ってきます：
 
 ```
-uv run agent_4_agent/query.py
+uv run python src/agent_4_agent/query.py
 私はPMエージェントです。ユーザーの要望に基づいて、エージェント作成のための要件を明確にすることが主な役割です。
 
 具体的には、以下のことができます。

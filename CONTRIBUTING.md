@@ -14,31 +14,30 @@ git clone https://github.com/tyukei/A4A.git
 cd A4A
 
 # 依存関係の同期
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 
 # 環境変数の設定
-cp agent_4_agent/.env.example agent_4_agent/.env
-# agent_4_agent/.env に GEMINI_API_KEY を設定してください
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
+# src/agent_4_agent/.env に GEMINI_API_KEY を設定してください
 ```
 
 ### 2. 新しいエージェントの作成
 新しいエージェントを作成する際は、以下の構成に従うことをお勧めします。
 
 ```text
-agent_4_agent/
- ├── agents/
- │    └── {your_agent_name}/
- │         ├── agent.py      # エージェントの定義
- │         ├── tools/         # ツール定義
- │         └── subagents/     # サブエージェント定義
+agents/
+ └── {your_agent_name}/
+      ├── agent.py      # エージェントの定義
+      ├── tools/         # ツール定義
+      └── subagents/     # サブエージェント定義
 ```
 
 ### 3. ローカルでのテスト
 Google ADK の Web インターフェースを使用して、作成したエージェントをテストできます。
 
 ```bash
-adk web
+adk web src/
 ```
 ブラウザで `http://127.0.0.1:8000` を開き、左上のメニューから自分のエージェントを選択して対話してください。
 

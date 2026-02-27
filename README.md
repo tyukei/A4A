@@ -27,29 +27,31 @@ git clone https://github.com/tyukei/A4A.git
 cd A4A
 
 # 環境構築
-uv sync
+uv sync --frozen
 source .venv/bin/activate
-cp agent_4_agent/.env.example agent_4_agent/.env
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
 
 # .envファイルにGEMINI_API_KEYを設定
 # https://aistudio.google.com/api-keys
 
 # Web UI を起動
-adk web
+adk web src/
 ```
 
 ブラウザで http://127.0.0.1:8000 を開いて、エージェント作成を始めましょう！
 
 ```bash
-# CLI で全自動作成（Web UI 不要）
-# エージェント作成 → GitHub PR 提出まで自動
-python run.py --idea "作りたいエージェントのキーワード"
+# CLI でエージェントを作成（Web UI 不要）
+a4a --idea "作りたいエージェントのキーワード"
 
-# エージェント作成 → PR提出 → レビュー + GitHub issue 起票まで全自動
-python run.py --idea "天気" --review
+# 作成 + GitHub PR 提出
+a4a --idea "天気" --pr
+
+# 作成 + PR提出 + レビュー + GitHub issue 起票まで全部
+a4a --idea "天気" --pr --issue
 ```
 
-詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するrunpy) をご覧ください。
+詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するa4a) をご覧ください。
 
 詳細な手順は [セットアップと実行ガイド](docs/setup_and_execution.md) をご覧ください。
 

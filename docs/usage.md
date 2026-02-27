@@ -20,14 +20,14 @@
 ```bash
 git clone https://github.com/tyukei/A4A.git
 cd A4A
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 ```
 
 ### 環境変数の設定
 
 ```bash
-cp agent_4_agent/.env.example agent_4_agent/.env
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
 ```
 
 `.env` ファイルに以下を設定してください。
@@ -46,7 +46,7 @@ https://aistudio.google.com/api-keys
 A4Aは **ADK Web UI** を使って操作します。
 
 ```bash
-adk web
+adk web src/
 ```
 
 ブラウザで以下にアクセスしてください。
@@ -179,31 +179,51 @@ make clean
 
 ---
 
-## CLI でエージェントを自動作成する（`run.py`）
+## CLI でエージェントを自動作成する（`a4a`）
 
-Web UI を使わず、コマンドラインから**エージェント作成〜PR提出〜レビュー〜GitHub issue 起票**まで全自動で実行できます。
+Web UI を使わず、コマンドラインから**エージェント作成〜PR提出〜レビュー〜GitHub issue 起票**まで実行できます。
+各操作はフラグで個別に制御できます。
+
+### フラグ一覧
+
+| フラグ | 説明 |
+|---|---|
+| `--idea KEYWORD` | キーワードからLLMがプロンプトを自動生成 |
+| `--pr` | エージェント作成後に GitHub PR を作成する |
+| `--review` | コードレビューを実行する（issueは作成しない） |
+| `--issue` | コードレビューを実行し GitHub issue も起票する（`--review`を兼ねる） |
+| `--review-only AGENT_NAME` | 既存エージェントのみレビューする（作成はスキップ） |
 
 ### 基本的な使い方
 
 ```bash
-# キーワードだけ渡して、LLMがプロンプトを自動生成してからエージェントを作成
-python run.py --idea "天気"
-python run.py --idea "沖縄観光"
+# エージェントを作成するだけ（PR・issueなし）
+a4a --idea "天気"
+a4a "天気予報エージェントを作って"
 
-# 作成プロンプトを直接渡す
-python run.py "天気予報エージェントを作って"
+# 作成 + PR作成
+a4a --idea "天気" --pr
 
-# 作成後にレビューも実行（GitHub issue も自動起票）
-python run.py --idea "沖縄観光" --review
+# 作成 + GitHub issue起票（レビューも実行）
+a4a --idea "天気" --issue
 
-# 既存エージェントのみレビューする
-python run.py --review-only okinawa_travel_agent
+# 作成 + PR作成 + issue起票まで全部
+a4a --idea "天気" --pr --issue
+
+# コードレビューのみ（issueは作成しない）
+a4a --idea "天気" --review
+
+# 既存エージェントをレビュー（issueなし）
+a4a --review-only okinawa_travel_agent
+
+# 既存エージェントをレビューしてissueも起票
+a4a --review-only okinawa_travel_agent --issue
 ```
 
 ### 実行フロー
 
 ```
-python run.py --idea "天気" --review
+a4a --idea "天気" --pr --issue
        │
        ▼ ① LLM がプロンプトを自動生成
        │   例: "weather_forecast_agent を作って。都市名から
@@ -211,44 +231,46 @@ python run.py --idea "天気" --review
        │
        ▼ ② agent_4_agent がエージェントを自動作成
        │   PM が質問してきたら LLM が自動回答（人間の操作不要）
+       │   → agents/{agent_name}/ に生成される
        │
-       ▼ ③ 作成したエージェントの GitHub PR を自動作成
+       ▼ ③ --pr: GitHub PR を作成
        │   feat/add-{agent-name} ブランチを作成してコミット・プッシュ・PR提出
        │
-       ▼ （--review がある場合）
+       ▼ --issue（または --review）がある場合
        ├─④ [レビュー①] 作成したエージェントのコード品質をレビュー
        └─⑤ [レビュー②] A4A フレームワーク自体の改善提案
+            └─ --issue のときのみ GitHub issue を起票
 ```
 
-### 自動 PR 作成
+### `--pr` による PR 作成
 
-エージェントが完成すると、以下の処理が自動で行われます。
+`--pr` フラグを付けると以下の処理が行われます。
 
 1. `feat/add-{agent-name}` ブランチを作成
-2. エージェントファイルをコミット（`.env` は除外）
+2. `agents/{agent_name}/` のファイルをコミット（`.env` は除外）
 3. リモートにプッシュ
-4. `[shink-shink] Add {agent_name}` タイトルで PR を提出
+4. `[{agent_name}(shink-shinka)] Add {agent_name}` タイトルで PR を提出
 
 ```
-[shink-shink] Add weather_forecast_agent
+[weather_forecast_agent(shink-shinka)] Add weather_forecast_agent
 ```
 
-PR本文にはエージェントの概要・変更ファイル一覧が自動生成されます。
+PR本文は `.github/pull_request_template.md` の構造（概要・変更内容・関連Issue・動作確認方法・チェックリスト）に準拠して自動生成されます。
 
-### `--review` で作成される GitHub issue
+### `--issue` で作成される GitHub issue
 
-`--review` フラグを付けると2種類のレビューが自動実行され、それぞれ GitHub issue が起票されます。
+`--issue` フラグを付けると2種類のレビューが自動実行され、それぞれ GitHub issue が起票されます。
 
 | レビュー | 担当エージェント | 観点 |
 |---|---|---|
 | ① 作成エージェントのレビュー | `quality_reporter_agent` | コード品質、instructionの完成度、ツール品質 |
 | ② A4Aシステムのレビュー | `system_reviewer_agent` | 機能の抜け漏れ、UX改善、アーキテクチャ改善 |
 
-起票される issue タイトルはすべて `[shink-shink]` で始まります。
+issue タイトルは `[エージェント名(shink-shinka)]` の形式になります。
 
 ```
-[shink-shink][okinawa_travel_agent] デフォルトモデル名に誤字がある
-[shink-shink][A4A] バッチ実行機能を追加する
+[okinawa_travel_agent(shink-shinka)] デフォルトモデル名に誤字がある
+[A4A(shink-shinka)] バッチ実行機能を追加する
 ```
 
-> **前提**: `gh auth login` で GitHub CLI の認証が必要です。未認証の場合、PR・issue の作成はスキップされ、改善内容がテキストで出力されます。
+> **前提**: `--pr` / `--issue` を使う場合は `gh auth login` で GitHub CLI の認証が必要です。未認証の場合はスキップされ、改善内容がテキストで出力されます。
