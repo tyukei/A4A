@@ -26,12 +26,11 @@ cp src/agent_4_agent/.env.example src/agent_4_agent/.env
 新しいエージェントを作成する際は、以下の構成に従うことをお勧めします。
 
 ```text
-agent_4_agent/
- ├── agents/
- │    └── {your_agent_name}/
- │         ├── agent.py      # エージェントの定義
- │         ├── tools/         # ツール定義
- │         └── subagents/     # サブエージェント定義
+agents/
+ └── {your_agent_name}/
+      ├── agent.py      # エージェントの定義
+      ├── tools/         # ツール定義
+      └── subagents/     # サブエージェント定義
 ```
 
 ### 3. ローカルでのテスト
