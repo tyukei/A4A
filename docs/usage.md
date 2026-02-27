@@ -20,7 +20,7 @@
 ```bash
 git clone https://github.com/tyukei/A4A.git
 cd A4A
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 ```
 

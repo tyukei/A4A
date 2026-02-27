@@ -203,7 +203,7 @@ source .venv/bin/activate
 必要なパッケージがインストールされていない可能性があります：
 
 ```bash
-uv sync
+uv sync --frozen
 ```
 
 ---
@@ -214,7 +214,7 @@ uv sync
 
 ```bash
 uv init -p=3.12
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 uv add google-adk python-dotenv
 adk create agent_4_agent

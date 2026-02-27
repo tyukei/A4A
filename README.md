@@ -27,7 +27,7 @@ git clone https://github.com/tyukei/A4A.git
 cd A4A
 
 # 環境構築
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 cp agent_4_agent/.env.example agent_4_agent/.env
 

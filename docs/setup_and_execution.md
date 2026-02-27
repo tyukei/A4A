@@ -4,7 +4,7 @@
 以下ターミナルより実行します。
 ```bash
 git clone https://github.com/tyukei/A4A.git
-uv sync
+uv sync --frozen
 source .venv/bin/activate
 cp agent_4_agent/.env.example agent_4_agent/.env
 ```
