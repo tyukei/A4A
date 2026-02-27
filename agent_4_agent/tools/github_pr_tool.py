@@ -42,7 +42,7 @@ def create_github_pr(agent_name: str, description: str = "") -> str:
                 return f"エラー: ブランチ切り替え失敗: {err}"
 
         # 2. エージェントディレクトリをステージング（.env は .gitignore で除外済み）
-        agent_dir = agent_name
+        agent_dir = os.path.join("agents", agent_name)
         rc, out, err = _run_git(["add", agent_dir], repo_root)
         if rc != 0:
             _run_git(["checkout", original_branch], repo_root)
@@ -77,9 +77,9 @@ def create_github_pr(agent_name: str, description: str = "") -> str:
             f"A4Aにより自動生成されたエージェント `{agent_name}` を追加します。\n"
             f"{agent_desc}\n\n"
             "## 変更内容\n\n"
-            f"- `{agent_name}/agent.py` — エージェント本体\n"
-            f"- `{agent_name}/__init__.py` — モジュール定義\n"
-            f"- `{agent_name}/a2a_agent.py` — A2A連携エントリポイント\n\n"
+            f"- `agents/{agent_name}/agent.py` — エージェント本体\n"
+            f"- `agents/{agent_name}/__init__.py` — モジュール定義\n"
+            f"- `agents/{agent_name}/a2a_agent.py` — A2A連携エントリポイント\n\n"
             "## 関連するIssue\n\n"
             "Closes #\n\n"
             "## 動作確認方法\n\n"
