@@ -51,7 +51,7 @@ a4a --idea "天気" --pr
 a4a --idea "天気" --pr --issue
 ```
 
-詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するrunpy) をご覧ください。
+詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するa4a) をご覧ください。
 
 詳細な手順は [セットアップと実行ガイド](docs/setup_and_execution.md) をご覧ください。
 
