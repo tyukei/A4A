@@ -16,5 +16,8 @@ dependencies = [
 [project.scripts]
 a4a = "a4a_lab.run:main"
 
+[tool.uv]
+package = true
+
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -4,26 +4,26 @@ agent_4_agent CLI - エージェントを自動作成し、品質レビューし
 
 Usage:
     # 直接プロンプトを渡して作成（PR・issueなし）
-    python run.py "天気予報エージェントを作って"
+    a4a "天気予報エージェントを作って"
 
     # キーワードだけ渡してLLMにプロンプトを生成させてから作成
-    python run.py --idea "天気"
+    a4a --idea "天気"
 
     # 作成後にGitHub PRも作成する
-    python run.py --idea "天気" --pr
+    a4a --idea "天気" --pr
 
     # 作成後にコードレビューしてGitHub issueも起票する
-    python run.py --idea "天気" --issue
+    a4a --idea "天気" --issue
 
     # 作成 + PR作成 + レビュー + issue起票まで全部
-    python run.py --idea "天気" --pr --issue
+    a4a --idea "天気" --pr --issue
 
     # コードレビューのみ（issueなし）
-    python run.py --idea "天気" --review
+    a4a --idea "天気" --review
 
     # 既存エージェントのみレビューする（作成はスキップ）
-    python run.py --review-only weather_agent
-    python run.py --review-only weather_agent --issue
+    a4a --review-only weather_agent
+    a4a --review-only weather_agent --issue
 """
 import asyncio
 import argparse
@@ -315,13 +315,13 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 例:
-  python run.py "天気予報エージェントを作って"
-  python run.py --idea "天気"
-  python run.py --idea "天気" --pr
-  python run.py --idea "天気" --issue
-  python run.py --idea "天気" --pr --issue
-  python run.py --review-only okinawa_gourmet_agent
-  python run.py --review-only okinawa_gourmet_agent --issue
+  a4a "天気予報エージェントを作って"
+  a4a --idea "天気"
+  a4a --idea "天気" --pr
+  a4a --idea "天気" --issue
+  a4a --idea "天気" --pr --issue
+  a4a --review-only okinawa_gourmet_agent
+  a4a --review-only okinawa_gourmet_agent --issue
 """,
     )
     parser.add_argument(
