@@ -3,6 +3,7 @@ import sys
 import time
 import os
 import signal
+from pathlib import Path
 from .discovery import discover_agents
 
 def main():
@@ -27,17 +28,22 @@ def main():
         print("Discovering agents...")
         agents = discover_agents()
         
+        # agents/ サブディレクトリがあればそこを cwd にする
+        root = Path(os.getcwd())
+        agents_dir = root / "agents"
+        agent_cwd = str(agents_dir) if agents_dir.exists() else str(root)
+
         for agent in agents:
             # print(f"Starting {agent.name} on port {agent.port} (module: {agent.module})...")
-            
+
             # Passing PORT as env var
             env = os.environ.copy()
             env["PORT"] = str(agent.port)
-            
+
             p = subprocess.Popen(
                 [sys.executable, "-m", agent.module],
                 env=env,
-                cwd=os.getcwd() # Run from root
+                cwd=agent_cwd,
             )
             processes.append(p)
 
