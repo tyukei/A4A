@@ -33,8 +33,27 @@ import sys
 import warnings
 from pathlib import Path
 
-# ADK内部の function_call 混在時の警告を抑制する
-warnings.filterwarnings("ignore", message=".*non-text parts.*")
+# ADK/google-genai が stderr に直接出力する "non-text parts" 警告を抑制する。
+# filterwarnings では第三者ライブラリに上書きされる場合があるため、
+# stderr 自体をラップして確実にフィルタリングする。
+_SUPPRESS_PATTERNS = ("non-text parts",)
+
+class _FilteredStderr:
+    def __init__(self, stream):
+        self._stream = stream
+
+    def write(self, text: str) -> int:
+        if any(p in text for p in _SUPPRESS_PATTERNS):
+            return len(text)
+        return self._stream.write(text)
+
+    def flush(self):
+        self._stream.flush()
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+sys.stderr = _FilteredStderr(sys.stderr)
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
