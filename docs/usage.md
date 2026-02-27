@@ -27,7 +27,7 @@ source .venv/bin/activate
 ### 環境変数の設定
 
 ```bash
-cp agent_4_agent/.env.example agent_4_agent/.env
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
 ```
 
 `.env` ファイルに以下を設定してください。
@@ -46,7 +46,7 @@ https://aistudio.google.com/api-keys
 A4Aは **ADK Web UI** を使って操作します。
 
 ```bash
-adk web
+adk web src/
 ```
 
 ブラウザで以下にアクセスしてください。
@@ -179,7 +179,7 @@ make clean
 
 ---
 
-## CLI でエージェントを自動作成する（`run.py`）
+## CLI でエージェントを自動作成する（`a4a`）
 
 Web UI を使わず、コマンドラインから**エージェント作成〜PR提出〜レビュー〜GitHub issue 起票**まで実行できます。
 各操作はフラグで個別に制御できます。
@@ -198,32 +198,32 @@ Web UI を使わず、コマンドラインから**エージェント作成〜PR
 
 ```bash
 # エージェントを作成するだけ（PR・issueなし）
-python run.py --idea "天気"
-python run.py "天気予報エージェントを作って"
+a4a --idea "天気"
+a4a "天気予報エージェントを作って"
 
 # 作成 + PR作成
-python run.py --idea "天気" --pr
+a4a --idea "天気" --pr
 
 # 作成 + GitHub issue起票（レビューも実行）
-python run.py --idea "天気" --issue
+a4a --idea "天気" --issue
 
 # 作成 + PR作成 + issue起票まで全部
-python run.py --idea "天気" --pr --issue
+a4a --idea "天気" --pr --issue
 
 # コードレビューのみ（issueは作成しない）
-python run.py --idea "天気" --review
+a4a --idea "天気" --review
 
 # 既存エージェントをレビュー（issueなし）
-python run.py --review-only okinawa_travel_agent
+a4a --review-only okinawa_travel_agent
 
 # 既存エージェントをレビューしてissueも起票
-python run.py --review-only okinawa_travel_agent --issue
+a4a --review-only okinawa_travel_agent --issue
 ```
 
 ### 実行フロー
 
 ```
-python run.py --idea "天気" --pr --issue
+a4a --idea "天気" --pr --issue
        │
        ▼ ① LLM がプロンプトを自動生成
        │   例: "weather_forecast_agent を作って。都市名から

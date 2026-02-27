@@ -305,7 +305,7 @@ async def main_async(
         if agent_name:
             await run_agent_review(agent_name, create_issue=issue)
         else:
-            print("\n手動でレビューする場合: python run.py --review-only <agent_name>")
+            print("\n手動でレビューする場合: a4a --review-only <agent_name>")
         await run_system_review(create_issue=issue)
 
 

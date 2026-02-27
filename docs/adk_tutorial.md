@@ -171,7 +171,7 @@ my_tool = FunctionTool(
 ADKの場合、UIは`adk web`コマンドで起動します。
 
 ```bash
-adk web
+adk web src/
 ```
 
 ブラウザで以下にアクセスしてください：
@@ -218,7 +218,7 @@ uv sync --frozen
 source .venv/bin/activate
 uv add google-adk python-dotenv
 adk create agent_4_agent
-echo "GOOGLE_API_KEY=your_google_api_key" >> agent_4_agent/.env
+echo "GOOGLE_API_KEY=your_google_api_key" >> src/agent_4_agent/.env
 ```
 
 ---

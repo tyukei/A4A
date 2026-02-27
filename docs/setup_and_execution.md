@@ -6,7 +6,7 @@
 git clone https://github.com/tyukei/A4A.git
 uv sync --frozen
 source .venv/bin/activate
-cp agent_4_agent/.env.example agent_4_agent/.env
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
 ```
 
 .envファイルにGEMINI_API_KEYを設定してください
@@ -18,7 +18,7 @@ https://aistudio.google.com/api-keys
 ## 実行手順
 以下ターミナルより実行します。
 ```bash
-adk web
+adk web src/
 ```
 open http://127.0.0.1:8000
 

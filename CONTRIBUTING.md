@@ -18,8 +18,8 @@ uv sync --frozen
 source .venv/bin/activate
 
 # 環境変数の設定
-cp agent_4_agent/.env.example agent_4_agent/.env
-# agent_4_agent/.env に GEMINI_API_KEY を設定してください
+cp src/agent_4_agent/.env.example src/agent_4_agent/.env
+# src/agent_4_agent/.env に GEMINI_API_KEY を設定してください
 ```
 
 ### 2. 新しいエージェントの作成
@@ -38,7 +38,7 @@ agent_4_agent/
 Google ADK の Web インターフェースを使用して、作成したエージェントをテストできます。
 
 ```bash
-adk web
+adk web src/
 ```
 ブラウザで `http://127.0.0.1:8000` を開き、左上のメニューから自分のエージェントを選択して対話してください。
 
