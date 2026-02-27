@@ -227,13 +227,13 @@ python run.py --idea "天気" --review
 1. `feat/add-{agent-name}` ブランチを作成
 2. エージェントファイルをコミット（`.env` は除外）
 3. リモートにプッシュ
-4. `[shink-shink] Add {agent_name}` タイトルで PR を提出
+4. `[{agent_name}(shink-shinka)] Add {agent_name}` タイトルで PR を提出
 
 ```
-[shink-shink] Add weather_forecast_agent
+[weather_forecast_agent(shink-shinka)] Add weather_forecast_agent
 ```
 
-PR本文にはエージェントの概要・変更ファイル一覧が自動生成されます。
+PR本文は `.github/pull_request_template.md` の構造（概要・変更内容・関連Issue・動作確認方法・チェックリスト）に準拠して自動生成されます。
 
 ### `--review` で作成される GitHub issue
 
@@ -244,11 +244,11 @@ PR本文にはエージェントの概要・変更ファイル一覧が自動生
 | ① 作成エージェントのレビュー | `quality_reporter_agent` | コード品質、instructionの完成度、ツール品質 |
 | ② A4Aシステムのレビュー | `system_reviewer_agent` | 機能の抜け漏れ、UX改善、アーキテクチャ改善 |
 
-起票される issue タイトルはすべて `[shink-shink]` で始まります。
+issue・PR タイトルは `[エージェント名(shink-shinka)]` の形式になります。
 
 ```
-[shink-shink][okinawa_travel_agent] デフォルトモデル名に誤字がある
-[shink-shink][A4A] バッチ実行機能を追加する
+[okinawa_travel_agent(shink-shinka)] デフォルトモデル名に誤字がある
+[A4A(shink-shinka)] バッチ実行機能を追加する
 ```
 
 > **前提**: `gh auth login` で GitHub CLI の認証が必要です。未認証の場合、PR・issue の作成はスキップされ、改善内容がテキストで出力されます。

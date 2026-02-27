@@ -69,18 +69,29 @@ def create_github_pr(agent_name: str, description: str = "") -> str:
             _run_git(["checkout", original_branch], repo_root)
             return f"エラー: git push 失敗: {err}"
 
-        # 5. PR作成
-        pr_title = f"[shink-shink] Add {agent_name}"
+        # 5. PR作成（pull_request_template.md の構造に準拠）
+        pr_title = f"[{agent_name}(shink-shinka)] Add {agent_name}"
         agent_desc = description or agent_name
         pr_body = (
             "## 概要\n\n"
-            f"A4Aにより自動生成されたエージェント `{agent_name}` を追加します。\n\n"
-            "## エージェント詳細\n\n"
+            f"A4Aにより自動生成されたエージェント `{agent_name}` を追加します。\n"
             f"{agent_desc}\n\n"
             "## 変更内容\n\n"
             f"- `{agent_name}/agent.py` — エージェント本体\n"
             f"- `{agent_name}/__init__.py` — モジュール定義\n"
             f"- `{agent_name}/a2a_agent.py` — A2A連携エントリポイント\n\n"
+            "## 関連するIssue\n\n"
+            "Closes #\n\n"
+            "## 動作確認方法\n\n"
+            "```bash\n"
+            "adk web\n"
+            "```\n\n"
+            f"左上のエージェント選択で `{agent_name}` を選択し、チャットで動作確認してください。\n\n"
+            "## チェックリスト\n\n"
+            "- [ ] 既存の機能に影響がないことを確認した\n"
+            "- [ ] タイポや不要なコメントがないことを確認した\n"
+            "- [ ] 必要なドキュメントを更新した\n\n"
+            "## その他\n\n"
             "🤖 Generated with [A4A (Agent for Agent)](https://github.com/tyukei/A4A)"
         )
 

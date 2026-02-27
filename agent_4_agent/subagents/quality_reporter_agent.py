@@ -25,7 +25,7 @@ quality_reporter_instruction = '''
 ## issueの書き方
 
 ### タイトル
-`[shink-shink][エージェント名] 改善内容を一言で`
+`[エージェント名(shink-shinka)] 改善内容を一言で`
 
 ### 本文の構造
 ```
