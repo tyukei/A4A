@@ -41,12 +41,14 @@ adk web
 ブラウザで http://127.0.0.1:8000 を開いて、エージェント作成を始めましょう！
 
 ```bash
-# CLI で全自動作成（Web UI 不要）
-# エージェント作成 → GitHub PR 提出まで自動
+# CLI でエージェントを作成（Web UI 不要）
 python run.py --idea "作りたいエージェントのキーワード"
 
-# エージェント作成 → PR提出 → レビュー + GitHub issue 起票まで全自動
-python run.py --idea "天気" --review
+# 作成 + GitHub PR 提出
+python run.py --idea "天気" --pr
+
+# 作成 + PR提出 + レビュー + GitHub issue 起票まで全部
+python run.py --idea "天気" --pr --issue
 ```
 
 詳細は [CLI ガイド](docs/usage.md#cli-でエージェントを自動作成するrunpy) をご覧ください。

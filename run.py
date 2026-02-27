@@ -3,25 +3,38 @@
 agent_4_agent CLI - エージェントを自動作成し、品質レビューしてGitHub issueを起票する
 
 Usage:
-    # 直接プロンプトを渡して作成
+    # 直接プロンプトを渡して作成（PR・issueなし）
     python run.py "天気予報エージェントを作って"
 
     # キーワードだけ渡してLLMにプロンプトを生成させてから作成
     python run.py --idea "天気"
-    python run.py --idea "沖縄観光" --review
 
-    # 作成後にコードレビュー → GitHub issue も起票する
-    python run.py "天気予報エージェントを作って" --review
+    # 作成後にGitHub PRも作成する
+    python run.py --idea "天気" --pr
+
+    # 作成後にコードレビューしてGitHub issueも起票する
+    python run.py --idea "天気" --issue
+
+    # 作成 + PR作成 + レビュー + issue起票まで全部
+    python run.py --idea "天気" --pr --issue
+
+    # コードレビューのみ（issueなし）
+    python run.py --idea "天気" --review
 
     # 既存エージェントのみレビューする（作成はスキップ）
     python run.py --review-only weather_agent
+    python run.py --review-only weather_agent --issue
 """
 import asyncio
 import argparse
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
+
+# ADK内部の function_call 混在時の警告を抑制する
+warnings.filterwarnings("ignore", message=".*non-text parts.*")
 
 # プロジェクトルートをパスに追加
 sys.path.insert(0, str(Path(__file__).parent))
@@ -187,24 +200,30 @@ async def run_create(prompt: str, context: str) -> str:
     return await _conversation_loop(runner, session_service, "a4a_cli", prompt, context)
 
 
-async def run_agent_review(agent_name: str) -> None:
+async def run_agent_review(agent_name: str, create_issue: bool = False) -> None:
     """[レビュー①] quality_reporter_agent: 作成したエージェントのコード品質をレビュー"""
     from agent_4_agent.subagents.quality_reporter_agent import quality_reporter_agent
 
     runner, session_service = _make_runner(quality_reporter_agent, "review_cli")
-    prompt = f"{agent_name} のコードレビューをして、改善点があれば GitHub issue を作成してください。"
+    if create_issue:
+        prompt = f"{agent_name} のコードレビューをして、改善点があれば GitHub issue を作成してください。"
+    else:
+        prompt = f"{agent_name} のコードレビューをしてください。（issueは作成しません）"
     print("\n" + "=" * 60)
     print(f"[レビュー①] 作成エージェントの品質レビュー中: {agent_name}")
     print("=" * 60)
     await _stream(runner, session_service, "review_cli", prompt)
 
 
-async def run_system_review() -> None:
+async def run_system_review(create_issue: bool = False) -> None:
     """[レビュー②] system_reviewer_agent: A4Aフレームワーク自体の改善提案"""
     from agent_4_agent.subagents.system_reviewer_agent import system_reviewer_agent
 
     runner, session_service = _make_runner(system_reviewer_agent, "sys_review_cli")
-    prompt = "agent_4_agent のコードを読んで、フレームワークとしての改善提案を GitHub issue に登録してください。"
+    if create_issue:
+        prompt = "agent_4_agent のコードを読んで、フレームワークとしての改善提案を GitHub issue に登録してください。"
+    else:
+        prompt = "agent_4_agent のコードを読んで、フレームワークとしての改善提案をしてください。（issueは作成しません）"
     print("\n" + "=" * 60)
     print("[レビュー②] A4Aシステム自体の改善提案中...")
     print("=" * 60)
@@ -223,10 +242,21 @@ async def run_create_pr(agent_name: str, description: str = "") -> None:
 
 
 async def main_async(
-    prompt: str | None, idea: str | None, review: bool, review_only: str | None
+    prompt: str | None,
+    idea: str | None,
+    review: bool,
+    review_only: str | None,
+    pr: bool,
+    issue: bool,
 ) -> None:
+    # --issue は --review も兼ねる
+    if issue:
+        review = True
+
     if review_only:
-        await run_agent_review(review_only)
+        await run_agent_review(review_only, create_issue=issue)
+        if review:
+            await run_system_review(create_issue=issue)
         return
 
     # --idea が指定されている場合はLLMでプロンプトを生成する
@@ -239,22 +269,24 @@ async def main_async(
 
     output = await run_create(prompt, context=idea or prompt)
 
-    # PR作成（作成されたエージェントを自動的にPRへ）
     agent_name = _extract_agent_name(output)
-    if agent_name:
-        await run_create_pr(agent_name, description=idea or "")
-    else:
-        print("\nagent_name を出力から特定できませんでした。PRは手動で作成してください。")
+    if not agent_name:
+        print("\nagent_name を出力から特定できませんでした。")
 
-    if review:
-        # ① 作成エージェントのコードレビュー
+    # --pr: GitHub PR を作成
+    if pr:
         if agent_name:
-            await run_agent_review(agent_name)
+            await run_create_pr(agent_name, description=idea or "")
+        else:
+            print("PRは手動で作成してください。")
+
+    # --review / --issue: コードレビュー（--issueのときだけGitHub issueも作成）
+    if review:
+        if agent_name:
+            await run_agent_review(agent_name, create_issue=issue)
         else:
             print("\n手動でレビューする場合: python run.py --review-only <agent_name>")
-
-        # ② A4Aシステム自体のレビュー
-        await run_system_review()
+        await run_system_review(create_issue=issue)
 
 
 def main() -> None:
@@ -265,8 +297,11 @@ def main() -> None:
 例:
   python run.py "天気予報エージェントを作って"
   python run.py --idea "天気"
-  python run.py --idea "沖縄観光" --review
+  python run.py --idea "天気" --pr
+  python run.py --idea "天気" --issue
+  python run.py --idea "天気" --pr --issue
   python run.py --review-only okinawa_gourmet_agent
+  python run.py --review-only okinawa_gourmet_agent --issue
 """,
     )
     parser.add_argument(
@@ -280,9 +315,19 @@ def main() -> None:
         help="キーワードだけ渡してLLMに作成プロンプトを自動生成させる（例: --idea '天気'）",
     )
     parser.add_argument(
+        "--pr",
+        action="store_true",
+        help="作成後に GitHub PR を作成する",
+    )
+    parser.add_argument(
         "--review",
         action="store_true",
-        help="作成後に2種類のレビューを実行: ①作成エージェントの品質レビュー ②A4Aシステム自体の改善提案",
+        help="作成後にコードレビューを実行する（issueは作成しない）",
+    )
+    parser.add_argument(
+        "--issue",
+        action="store_true",
+        help="コードレビューを実行し GitHub issue も起票する（--reviewを兼ねる）",
     )
     parser.add_argument(
         "--review-only",
@@ -296,7 +341,10 @@ def main() -> None:
         parser.print_help()
         sys.exit(1)
 
-    asyncio.run(main_async(args.prompt, args.idea, args.review, args.review_only))
+    asyncio.run(main_async(
+        args.prompt, args.idea, args.review, args.review_only,
+        pr=args.pr, issue=args.issue,
+    ))
 
 
 if __name__ == "__main__":
