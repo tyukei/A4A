@@ -14,7 +14,7 @@ def create_agent_files(agent_name: str, agent_code: str) -> str:
         grand_parent_dir = os.path.dirname(parent_path) # agent_4_agent
         grand_grand_parent_dir = os.path.dirname(grand_parent_dir) # A4A
         env_path = os.path.join(grand_parent_dir, ".env") # agent_4_agent/.env
-        agent_dir = os.path.join(grand_grand_parent_dir, agent_name) # A4A/agent_name
+        agent_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name) # A4A/agents/agent_name
         # エージェントディレクトリを作成
         os.makedirs(agent_dir, exist_ok=True) 
         # __init__.pyファイルを作成
@@ -54,11 +54,11 @@ def get_agent_file(agent_name: str, file_name: str) -> str:
     try:
         # このファイルの3階層上のディレクトリを取得
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        file_path = os.path.join(base_path, agent_name, file_name)
-        
+        file_path = os.path.join(base_path, "agents", agent_name, file_name)
+
         if not os.path.isfile(file_path):
             return f"エラー: ファイルが存在しません ({file_path})"
-        
+
         with open(file_path, "r") as f:
             content = f.read()
         
@@ -77,11 +77,11 @@ def edit_agent_file(agent_name: str, file_name: str, new_code: str) -> str:
     try:
         # このファイルの3階層上のディレクトリを取得
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        file_path = os.path.join(base_path, agent_name, file_name)
-        
+        file_path = os.path.join(base_path, "agents", agent_name, file_name)
+
         if not os.path.isfile(file_path):
             return f"エラー: ファイルが存在しません ({file_path})"
-        
+
         with open(file_path, "w") as f:
             f.write(new_code)
         

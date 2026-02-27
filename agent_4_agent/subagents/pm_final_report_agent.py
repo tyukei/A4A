@@ -20,8 +20,8 @@ member_agents の作業が終わったら、必ず最後にユーザーへ以下
 - 特徴: XXX
 
 ## 生成ファイル
-- XXX/agent.py
-- XXX/.env
+- agents/XXX/agent.py
+- agents/XXX/.env
 
 ## 次に調整できる点&改善案
 - XXX

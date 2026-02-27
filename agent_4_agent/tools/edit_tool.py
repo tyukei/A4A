@@ -49,7 +49,7 @@ def get_animal_location_map(location_name: str) -> str:
         # ツールファイルを作成するディレクトリを決定
         if agent_name:
             # 特定のエージェント用のツールとして作成
-            tools_dir = os.path.join(grand_grand_parent_dir, agent_name, "tools")
+            tools_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name, "tools")
         else:
             # agent_4_agentのtoolsディレクトリに作成
             tools_dir = parent_path
@@ -121,10 +121,10 @@ def list_custom_tools(agent_name: Optional[str] = None) -> str:
         
         # ツールディレクトリを決定
         if agent_name:
-            tools_dir = os.path.join(grand_grand_parent_dir, agent_name, "tools")
+            tools_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name, "tools")
         else:
             tools_dir = parent_path
-        
+
         if not os.path.exists(tools_dir):
             return f"ツールディレクトリが存在しません: {tools_dir}"
         
@@ -164,15 +164,15 @@ def get_custom_tool(tool_name: str, agent_name: Optional[str] = None) -> str:
         
         # ツールディレクトリを決定
         if agent_name:
-            tools_dir = os.path.join(grand_grand_parent_dir, agent_name, "tools")
+            tools_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name, "tools")
         else:
             tools_dir = parent_path
-        
+
         tool_file_path = os.path.join(tools_dir, f"{tool_name}_tool.py")
-        
+
         if not os.path.isfile(tool_file_path):
             return f"エラー: ツールファイルが存在しません ({tool_file_path})"
-        
+
         with open(tool_file_path, "r") as f:
             content = f.read()
         
@@ -207,15 +207,15 @@ def edit_custom_tool(
         
         # ツールディレクトリを決定
         if agent_name:
-            tools_dir = os.path.join(grand_grand_parent_dir, agent_name, "tools")
+            tools_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name, "tools")
         else:
             tools_dir = parent_path
-        
+
         tool_file_path = os.path.join(tools_dir, f"{tool_name}_tool.py")
-        
+
         if not os.path.isfile(tool_file_path):
             return f"エラー: ツールファイルが存在しません ({tool_file_path})"
-        
+
         # ツールファイルを更新
         with open(tool_file_path, "w") as f:
             # インポート文を追加
@@ -255,15 +255,15 @@ def delete_custom_tool(tool_name: str, agent_name: Optional[str] = None) -> str:
         
         # ツールディレクトリを決定
         if agent_name:
-            tools_dir = os.path.join(grand_grand_parent_dir, agent_name, "tools")
+            tools_dir = os.path.join(grand_grand_parent_dir, "agents", agent_name, "tools")
         else:
             tools_dir = parent_path
-        
+
         tool_file_path = os.path.join(tools_dir, f"{tool_name}_tool.py")
-        
+
         if not os.path.isfile(tool_file_path):
             return f"エラー: ツールファイルが存在しません ({tool_file_path})"
-        
+
         # ファイルを削除
         os.remove(tool_file_path)
         
