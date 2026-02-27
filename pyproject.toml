@@ -1,5 +1,5 @@
 [project]
-name = "a4a"
+name = "a4a-lab"
 version = "0.2.18"
 description = "This project is A4A(Agent for Agent) of T2A(Text to Agent) and aim to CoA(Chain of AI) on AOTL(AI On The Loop)"
 readme = "README.md"
@@ -12,3 +12,9 @@ dependencies = [
     "fastapi>=0.109.0",
     "pyyaml>=6.0.3",
 ]
+
+[project.scripts]
+a4a = "a4a_lab.run:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

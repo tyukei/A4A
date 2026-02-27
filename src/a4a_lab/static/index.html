@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A4A - Agent for Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 14px 24px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.04em;
+    }
+
+    header .badge {
+      font-size: 0.65rem;
+      background: #334155;
+      color: #94a3b8;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .bubble-wrap.user { align-items: flex-end; }
+    .bubble-wrap.agent { align-items: flex-start; }
+
+    .label {
+      font-size: 0.7rem;
+      color: #64748b;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .agent-badge {
+      font-size: 0.65rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 1px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .agent-badge:empty { display: none; }
+
+    .bubble {
+      max-width: min(680px, 90%);
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+
+    .bubble.user {
+      background: #2563eb;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .bubble.agent {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* Markdown styles inside agent bubble */
+    .bubble.agent h1, .bubble.agent h2, .bubble.agent h3,
+    .bubble.agent h4, .bubble.agent h5, .bubble.agent h6 {
+      margin: 0.9em 0 0.4em;
+      line-height: 1.3;
+      color: #f1f5f9;
+    }
+    .bubble.agent h1 { font-size: 1.25em; }
+    .bubble.agent h2 { font-size: 1.1em; }
+    .bubble.agent h3 { font-size: 1em; }
+    .bubble.agent p { margin: 0.5em 0; }
+    .bubble.agent ul, .bubble.agent ol {
+      padding-left: 1.4em;
+      margin: 0.4em 0;
+    }
+    .bubble.agent li { margin: 0.2em 0; }
+    .bubble.agent code {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.88em;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: #38bdf8;
+    }
+    .bubble.agent pre {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      margin: 0.6em 0;
+    }
+    .bubble.agent pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: #e2e8f0;
+      font-size: 0.87em;
+    }
+    .bubble.agent a {
+      color: #38bdf8;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .bubble.agent strong { color: #f1f5f9; }
+    .bubble.agent em { color: #cbd5e1; }
+    .bubble.agent blockquote {
+      border-left: 3px solid #475569;
+      padding-left: 12px;
+      color: #94a3b8;
+      margin: 0.5em 0;
+    }
+    .bubble.agent hr {
+      border: none;
+      border-top: 1px solid #334155;
+      margin: 0.8em 0;
+    }
+    .bubble.agent table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.6em 0;
+      font-size: 0.88em;
+    }
+    .bubble.agent th, .bubble.agent td {
+      border: 1px solid #334155;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .bubble.agent th { background: #0f172a; color: #94a3b8; }
+    .bubble.agent *:first-child { margin-top: 0; }
+    .bubble.agent *:last-child  { margin-bottom: 0; }
+
+    .bubble.agent.streaming::after {
+      content: "▋";
+      display: inline-block;
+      animation: blink 0.8s step-end infinite;
+      color: #38bdf8;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .thinking {
+      display: flex;
+      gap: 6px;
+      padding: 12px 16px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+
+    .thinking span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .thinking span.dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking span.dot:nth-child(3) { animation-delay: 0.4s; }
+
+    .thinking-agent {
+      font-size: 0.7rem;
+      color: #38bdf8;
+      margin-left: 4px;
+    }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    #bottom {
+      padding: 12px 16px 20px;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      flex-shrink: 0;
+    }
+
+    #form {
+      display: flex;
+      gap: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    #input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      outline: none;
+      resize: none;
+      min-height: 48px;
+      max-height: 160px;
+      overflow-y: auto;
+      transition: border-color 0.15s;
+    }
+
+    #input:focus { border-color: #38bdf8; }
+    #input::placeholder { color: #475569; }
+
+    #send {
+      padding: 0 20px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    #send:hover { background: #1d4ed8; }
+    #send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #475569;
+      user-select: none;
+    }
+
+    .empty-state .icon { font-size: 2.5rem; }
+    .empty-state p { font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>A4A</h1>
+    <span class="badge">Agent for Agent</span>
+  </header>
+
+  <div id="chat">
+    <div class="empty-state" id="empty">
+      <div class="icon">🤖</div>
+      <p>エージェントに何でも聞いてみてください</p>
+    </div>
+  </div>
+
+  <div id="bottom">
+    <form id="form">
+      <textarea
+        id="input"
+        placeholder="メッセージを入力... (Shift+Enter で改行)"
+        rows="1"
+      ></textarea>
+      <button id="send" type="submit">送信</button>
+    </form>
+  </div>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    let emptyEl = document.getElementById("empty");
+
+    // ページロード時にセッションIDを生成（タブ内で会話を継続）
+    const SESSION_ID = "ws_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+
+    // エージェント名の表示ラベルマッピング
+    const AGENT_LABELS = {
+      "remote_agent":               "コーディネーター",
+      "coordinator_agent":          "コーディネーター",
+      "okinawa_soba_search_agent":  "沖縄そば検索",
+      "okinawa_soba_recipe_agent":  "そばレシピ",
+      "okinawa_soba_recommender":   "そばおすすめ",
+      "okinawa_express_bus_agent":  "バス情報",
+      "okinawa_beach_recommender":  "ビーチ案内",
+      "angel_agent":                "エンジェル",
+      "palm_tree_info_agent":       "ヤシの木情報",
+      "agent_4_agent":              "A4A",
+    };
+
+    function agentLabel(name) {
+      return AGENT_LABELS[name] || name;
+    }
+
+    // Auto-resize textarea
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    });
+
+    // Submit on Enter (not Shift+Enter)
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    function addBubble(role, text = "") {
+      const wrap = document.createElement("div");
+      wrap.className = `bubble-wrap ${role}`;
+
+      const label = document.createElement("div");
+      label.className = "label";
+
+      const labelText = document.createElement("span");
+      labelText.textContent = role === "user" ? "あなた" : "エージェント";
+      label.appendChild(labelText);
+
+      let badge = null;
+      if (role === "agent") {
+        badge = document.createElement("span");
+        badge.className = "agent-badge";
+        label.appendChild(badge);
+      }
+
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${role}`;
+      bubble.textContent = text;
+
+      wrap.appendChild(label);
+      wrap.appendChild(bubble);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+      return { bubble, badge };
+    }
+
+    function addThinking() {
+      const wrap = document.createElement("div");
+      wrap.className = "bubble-wrap agent";
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = "エージェント";
+
+      const dots = document.createElement("div");
+      dots.className = "thinking";
+      dots.innerHTML = `<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span class="thinking-agent"></span>`;
+
+      wrap.appendChild(label);
+      wrap.appendChild(dots);
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+      return { wrap, thinkingAgent: dots.querySelector(".thinking-agent") };
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const query = input.value.trim();
+      if (!query) return;
+
+      // Clear empty state on first message
+      if (emptyEl) {
+        emptyEl.remove();
+        emptyEl = null;
+      }
+
+      addBubble("user", query);
+
+      input.value = "";
+      input.style.height = "auto";
+      send.disabled = true;
+
+      const { wrap: thinkingWrap, thinkingAgent } = addThinking();
+      let agentBubble = null;
+      let agentBadge = null;
+      let rawText = "";
+
+      try {
+        const res = await fetch("/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, session_id: SESSION_ID }),
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6);
+            if (data === "[DONE]") break;
+
+            // エージェント切り替えイベント
+            if (data.startsWith("[AGENT:") && data.endsWith("]")) {
+              const name = data.slice(7, -1);
+              const label = agentLabel(name);
+              // thinking 中はドットの横に表示
+              thinkingAgent.textContent = label;
+              // バブルが既にあればバッジを更新
+              if (agentBadge) agentBadge.textContent = label;
+              continue;
+            }
+
+            // 初回テキスト: thinking → bubble に切り替え
+            if (!agentBubble) {
+              thinkingWrap.remove();
+              const result = addBubble("agent");
+              agentBubble = result.bubble;
+              agentBadge  = result.badge;
+              // thinking 中に判明したエージェント名を引き継ぐ
+              if (agentBadge && thinkingAgent.textContent) {
+                agentBadge.textContent = thinkingAgent.textContent;
+              }
+              agentBubble.classList.add("streaming");
+            }
+
+            // ストリーミング中は生テキストで表示
+            rawText += data + "\n";
+            agentBubble.textContent = rawText;
+            chat.scrollTop = chat.scrollHeight;
+          }
+        }
+      } catch (err) {
+        thinkingWrap.remove();
+        const { bubble: errBubble } = addBubble("agent");
+        errBubble.textContent = "エラーが発生しました: " + err.message;
+        errBubble.style.color = "#f87171";
+      } finally {
+        // 完了後にマークダウンとしてレンダリング
+        if (agentBubble) {
+          agentBubble.classList.remove("streaming");
+          agentBubble.innerHTML = marked.parse(rawText.trim());
+        }
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
