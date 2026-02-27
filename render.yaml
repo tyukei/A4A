@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: a4a
+    runtime: python
+    buildCommand: pip install .
+    startCommand: uvicorn a4a.web:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MODEL
+        value: gemini-2.0-flash
+    plan: free
